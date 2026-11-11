@@ -64,8 +64,12 @@ async function readJson(request) {
   }
 }
 
+export function isAdminEnabled({ store, origin, passwordHash }) {
+  return Boolean(store && origin && /^[a-f0-9]{32}:[a-f0-9]{64}$/.test(passwordHash));
+}
+
 export function createAdminHandler({ store, origin, passwordHash, local = false }) {
-  const enabled = Boolean(store && origin && /^[a-f0-9]{32}:[a-f0-9]{64}$/.test(passwordHash));
+  const enabled = isAdminEnabled({ store, origin, passwordHash });
   const cookieName = local ? 'maia_admin_local' : '__Host-maia_admin';
   const cookie = (value, age) =>
     `${cookieName}=${value}; Max-Age=${age}; Path=/; HttpOnly; SameSite=Strict${local ? '' : '; Secure'}`;

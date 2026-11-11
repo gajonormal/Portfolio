@@ -1,4 +1,5 @@
-import { mkdir, copyFile, cp, rm } from 'node:fs/promises';
+import { mkdir, copyFile, cp, readFile, rm, writeFile } from 'node:fs/promises';
+import { isAdminEnabled } from './admin-server.mjs';
 
 const copyFiles = async (files, destination) => {
 	await Promise.all(files.map(file => copyFile(file, `${destination}/${file.split('/').pop()}`)));
@@ -21,6 +22,16 @@ const rootFiles = [
 	'desktop-admin.js'
 ];
 await copyFiles(rootFiles, 'dist');
+
+const { MAIA_ADMIN_ORIGIN, MAIA_ADMIN_PASSWORD_HASH, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN } = process.env;
+if (isAdminEnabled({
+	origin: MAIA_ADMIN_ORIGIN?.startsWith('https://'),
+	passwordHash: MAIA_ADMIN_PASSWORD_HASH,
+	store: UPSTASH_REDIS_REST_URL?.startsWith('https://') && UPSTASH_REDIS_REST_TOKEN
+})) {
+	const html = await readFile('dist/index.html', 'utf8');
+	await writeFile('dist/index.html', html.replace(/(id="admin-unlock"[^>]*?)\s+hidden(?=\s*>)/, '$1'));
+}
 
 await mkdir('dist/content', { recursive: true });
 await copyFiles([
