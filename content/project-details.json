@@ -1,0 +1,513 @@
+{
+  "visitar": {
+    "context": "A mobile companion for visiting Parque do Barrocal, developed as a final-year Computer Engineering project at ESTCB/IPCB. The design combines outdoor exploration with information that remains available when mobile coverage is unreliable.",
+    "ownership": "Team project by Bernardo Maia and Leonardo Martins, supervised by Professor Pedro Silva. The technical choices described here concern the shared project; individual ownership of specific modules is not attributed.",
+    "journey": [
+      "Explore points of interest and narrow the list by category.",
+      "Use the map or a suggested/custom route to plan the visit.",
+      "Download the relevant multimedia before entering an area with limited connectivity.",
+      "At the park, use GPS proximity, the audio guide and the 360° viewer to explore the mapped locations.",
+      "Track visited places and badges in the digital passport."
+    ],
+    "architecture": [
+      {
+        "title": "Flutter application",
+        "text": "Dart and Flutter provide the interface, navigation and device integration. The application combines map-based discovery, routes, multimedia, favourites and the passport."
+      },
+      {
+        "title": "Synchronize first, visit offline",
+        "text": "Firebase supplies content during synchronization. Sequential downloads prepare local multimedia and let the interface present progress. After downloading the relevant content, proximity checks and the visit experience run on the device."
+      },
+      {
+        "title": "Sensors and routes",
+        "text": "GPS positions feed a Haversine distance calculation with a documented 50-metre proximity radius. Device orientation controls the panorama viewer, while OSRM supports walking routes."
+      }
+    ],
+    "features": [
+      "Explore, search and filter points of interest.",
+      "Map view, suggested routes and custom itineraries.",
+      "Panoramic 360° multimedia with gyroscope interaction and an audio guide.",
+      "Digital passport, visited locations and badges.",
+      "Offline downloads for points of interest and routes.",
+      "Portuguese and English interface support."
+    ],
+    "setup": {
+      "requirements": [
+        "Flutter SDK and a compatible device or emulator.",
+        "Project Firebase configuration and access to the relevant multimedia for synchronization.",
+        "GPS and motion sensors for validating the full outdoor experience."
+      ],
+      "commands": [
+        "git clone https://github.com/gajonormal/VisitAR.git",
+        "cd VisitAR",
+        "flutter pub get",
+        "flutter run"
+      ],
+      "note": "A web or desktop build does not establish that mobile GPS, background behaviour or the gyroscope work identically. Validate those flows on a physical device."
+    },
+    "limitations": [
+      "Offline use requires downloading the relevant content beforehand.",
+      "Proximity detection depends on GPS accuracy, permissions and the surrounding terrain.",
+      "The documented content covers 34 mapped points of interest; expanding to another park requires new content and mapping."
+    ],
+    "validation": "The inspected repository contains three flutter_test cases in test/logic_test.dart covering incomplete route progress, completion and a zero-point route. The report also includes field validation and test-execution evidence. Flutter was not available in this environment, so these tests were not rerun. The README statement that no automated tests exist is outdated.",
+    "process": [
+      {
+        "title": "Replacing marker-based AR with panoramas",
+        "text": "The original augmented-reality direction depended on reliable marker recognition outdoors. The project moved to 360° panoramas to retain an immersive visit with a more predictable interaction."
+      },
+      {
+        "title": "Preparing for unreliable coverage",
+        "text": "Sequential downloads trade parallel transfer speed for controlled progress and a locally available visit. The synchronization step is distinct from the later outdoor experience."
+      },
+      {
+        "title": "Documenting the implemented interface",
+        "text": "The gallery uses screenshots from the report’s application screenshots section, rather than earlier interface mockups."
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "assets/projects/screenshots/visitar/explore.png",
+        "title": "Explore the park",
+        "caption": "Discover points of interest and filter places by category.",
+        "alt": "Explore the park"
+      },
+      {
+        "src": "assets/projects/screenshots/visitar/map.png",
+        "title": "Map and navigation",
+        "caption": "Locate nearby places and plan a route through the park.",
+        "alt": "Map and navigation"
+      },
+      {
+        "src": "assets/projects/screenshots/visitar/panorama.png",
+        "title": "360° panorama viewer",
+        "caption": "Look around a point of interest using an immersive panorama.",
+        "alt": "360° panorama viewer"
+      },
+      {
+        "src": "assets/projects/screenshots/visitar/passport.png",
+        "title": "Digital passport",
+        "caption": "Track completed routes, visited places and earned badges.",
+        "alt": "Digital passport"
+      },
+      {
+        "src": "assets/projects/screenshots/visitar/offline.png",
+        "title": "Offline downloads",
+        "caption": "Keep points of interest available before a visit without mobile coverage.",
+        "alt": "Offline downloads"
+      }
+    ],
+    "sources": [
+      {
+        "label": "Public project README",
+        "url": "https://github.com/gajonormal/VisitAR/blob/main/README.md"
+      },
+      {
+        "label": "Final-year report: Bernardo Maia and Leonardo Martins, June 2026; application screenshots and test evidence",
+        "note": "Local report consulted; not uploaded with the portfolio."
+      },
+      {
+        "label": "Passport and route-progress unit tests",
+        "url": "https://github.com/gajonormal/VisitAR/blob/main/test/logic_test.dart"
+      }
+    ],
+    "architectureDiagram": "assets/projects/architecture/visitar.svg",
+    "architectureFlows": [
+      {
+        "title": "Prepare a visit online",
+        "steps": [
+          "The Flutter app synchronizes content and media with Firebase.",
+          "A sequential download pipeline writes selected multimedia to local device storage and reports progress.",
+          "Routes and points of interest are selected before or during the visit; OSRM supports walking-route calculation."
+        ]
+      },
+      {
+        "title": "Explore with downloaded content",
+        "steps": [
+          "GPS updates feed distance checks against the mapped points of interest.",
+          "The visit logic applies the documented proximity radius and updates passport/route progress.",
+          "Downloaded panoramas, images and audio are read from the local cache; device orientation controls the 360° viewer.",
+          "Cloud synchronization and external route calculation remain distinct from the downloaded multimedia experience."
+        ]
+      }
+    ]
+  },
+  "nethergate": {
+    "context": "Running a Minecraft Java server normally involves several separate tasks: preparing Java, installing server software, reading logs, managing players and protecting worlds. Nethergate brings these tasks into a desktop application while keeping the library under the user’s control.",
+    "ownership": "Personal open-source project by Bernardo Maia, distributed under GPL-3.0-only. The documented desktop preview is version 0.2.0 and targets Windows x64.",
+    "journey": [
+      "Create or import a server in the local library.",
+      "Choose Paper or Fabric and configure the Minecraft version, memory and connection mode.",
+      "Prepare the required runtime and review the Minecraft EULA before starting a server.",
+      "Use the console and the player, plugin/mod and world panels during administration.",
+      "Create backups or migrate to a separate server profile while preserving the original world."
+    ],
+    "architecture": [
+      {
+        "title": "React interface and typed API",
+        "text": "React panels call a shared TypeScript action contract. Shared polling hooks avoid overlapping refreshes in the same context and ignore stale responses after a context change. Runtime request validation remains a responsibility of the Rust core."
+      },
+      {
+        "title": "Desktop shell and independent engine",
+        "text": "Tauri provides the native window, dialogs and notifications. On Windows the interface communicates with a separate local engine over loopback using a credential protected by the user account. The engine can remain active after the window closes."
+      },
+      {
+        "title": "Local data and recoverable operations",
+        "text": "The Rust core and CLI share domain logic for server lifecycle, Java, networking, players, mods, backups and cloud storage. Local JSON manifests describe the library; restore operations retain recovery state and migrations create a new profile."
+      }
+    ],
+    "features": [
+      "Paper and Fabric setup with Java runtime preparation.",
+      "Server console, gameplay options, player and whitelist administration.",
+      "Modrinth search, dependency resolution and local JAR import.",
+      "Local, LAN and internet connection options, including network diagnostics and optional external services.",
+      "Manual and scheduled local backups, recoverable restores and migration that preserves the source.",
+      "Optional S3-compatible, Google Drive and Dropbox backups with chunk-based transfer and recovery.",
+      "Server import/export and background operation."
+    ],
+    "setup": {
+      "requirements": [
+        "Windows desktop development: Node.js 22, stable Rust, Visual Studio C++ build tools and WebView2.",
+        "Internet access for runtime/software downloads and optional third-party integrations."
+      ],
+      "commands": ["npm ci", "npm run desktop"],
+      "note": "Use npm run package:windows to build the Windows installer. Minecraft server execution requires accepting its EULA. This documentation task did not start a Minecraft server."
+    },
+    "limitations": [
+      "Windows x64 is the primary desktop target; OS integration and credential protection are Windows-specific.",
+      "The preview installer is unsigned and updates are installed manually.",
+      "Internet reachability depends on the router, firewall, NAT/CGNAT and any chosen tunnel service. DuckDNS alone does not open ports.",
+      "Automatic local backups wait for a server to stop. World migration does not support downgrades.",
+      "The local engine API is not designed as a publicly exposed administration service."
+    ],
+    "validation": "The repository defines Rust formatting, clippy and test checks, a TypeScript/Vite build and browser UI fixtures. These checks were identified from the project documentation and test code; they were not all rerun for this portfolio update. Gallery images render the actual React interface using an isolated fixture and a demo server, not a live Minecraft session.",
+    "screenshots": [
+      {
+        "src": "assets/projects/screenshots/nethergate/library.png",
+        "title": "Server library",
+        "caption": "Browse the local server library, inspect its configuration and open the management tools.",
+        "alt": "Server library"
+      },
+      {
+        "src": "assets/projects/screenshots/nethergate/console.png",
+        "title": "Server console and navigation",
+        "caption": "Follow server output and access world, player, plugin and connection settings.",
+        "alt": "Server console and navigation"
+      }
+    ],
+    "sources": [
+      {
+        "label": "README and installation instructions",
+        "url": "https://github.com/gajonormal/Nethergate/blob/main/README.md"
+      },
+      {
+        "label": "Architecture guide",
+        "url": "https://github.com/gajonormal/Nethergate/blob/main/docs/architecture.md"
+      },
+      {
+        "label": "Development and checks",
+        "url": "https://github.com/gajonormal/Nethergate/blob/main/docs/development.md"
+      }
+    ],
+    "architectureDiagram": "assets/projects/architecture/nethergate.svg",
+    "architectureFlows": [
+      {
+        "title": "An interface action reaches the server",
+        "steps": [
+          "A React panel sends an action through the shared TypeScript API contract.",
+          "The Tauri shell passes the request to the local engine over an authenticated loopback session.",
+          "The Rust core validates the action, reads the library state and manages the relevant Java process or domain operation.",
+          "Polling hooks refresh library state and console data without keeping responses from a previously selected server."
+        ]
+      },
+      {
+        "title": "World protection and background operation",
+        "steps": [
+          "Backups write validated manifests and data to the selected destination; optional providers transfer verified chunks.",
+          "An interrupted restore keeps recovery information so that the interface can guide completion.",
+          "Version migration creates a separate server profile, preserving the source world.",
+          "The engine can continue running independently after the desktop window closes."
+        ]
+      }
+    ]
+  },
+  "abisso": {
+    "context": "Abisso explores how a small input can become a living 3D scene. A word, an image or a random seed creates a populated aquarium that can be observed, customized and shared directly from a browser.",
+    "ownership": "Personal project by Bernardo Maia. The application uses Three.js, included with its MIT license, and is published as a static website on GitHub Pages.",
+    "journey": [
+      "Start from a word, an image or a random discovery.",
+      "Observe the generated aquarium; rotate the view and zoom to inspect its inhabitants.",
+      "Select a creature and edit its anatomy, colours, patterns and behaviour.",
+      "Change the aquarium environment, decorations and vegetation.",
+      "Save a collection entry, export an image or JSON, share a link, or export a standalone HTML widget."
+    ],
+    "architecture": [
+      {
+        "title": "Local procedural generation",
+        "text": "Seeded generation controls anatomy, palettes and the initial scene. Text is interpreted through keyword rules and seeds; image inputs provide dominant colours and a visual signature. This is procedural generation, without generative AI or object recognition."
+      },
+      {
+        "title": "Browser rendering engine",
+        "text": "The JavaScript engine separates genetics/anatomy, movement, habitats and rendering. Three.js and shaders draw the WebGL scene, while the editor coordinates creature and aquarium controls."
+      },
+      {
+        "title": "Portable state and static delivery",
+        "text": "Collections use browser localStorage. JSON exports move aquarium data between devices, share links encode state in the URL, and the widget exporter packages the aquarium, engine and license into standalone HTML. Generation does not require a backend."
+      }
+    ],
+    "features": [
+      "22 species with procedural anatomy, patterns, variants and mutations.",
+      "Tropical reef, abyss and garden themes with classic, panoramic and vertical tanks.",
+      "Animated creatures, vegetation and particles, with feeding and growth.",
+      "Creature and aquarium customization through four editor sections.",
+      "PNG export, JSON import/export, local collection storage and shareable links.",
+      "Standalone HTML widgets with independent rotation and zoom options."
+    ],
+    "setup": {
+      "requirements": [
+        "Node.js 22 or later for the local server.",
+        "A modern JavaScript/WebGL browser. Three.js is bundled with the repository."
+      ],
+      "commands": [
+        "git clone https://github.com/gajonormal/ABISSO.git",
+        "cd ABISSO",
+        "npm start"
+      ],
+      "note": "Open http://127.0.0.1:4200/. Running the application needs no build step. npm run build prepares the static dist folder for publishing."
+    },
+    "limitations": [
+      "WebGL and device graphics capabilities determine rendering support and performance.",
+      "Collections are stored on the current browser/device; JSON export is needed to move saved work.",
+      "Image input extracts colours rather than recognizing objects or recreating a photograph.",
+      "Embedded widgets require a host that permits iframe content and JavaScript.",
+      "A seed reproduces the starting aquarium; the animated scene continues evolving over time."
+    ],
+    "validation": "The gallery was captured from a local run of the application using the seed “recife”. The repository contains project checks and Node test files. This update verified the visible creation and customization flow, rather than rerunning every engine test.",
+    "screenshots": [
+      {
+        "src": "assets/projects/screenshots/abisso/start.png",
+        "title": "Create an aquarium",
+        "caption": "Start an aquarium with a word, an image or a random discovery.",
+        "alt": "Create an aquarium"
+      },
+      {
+        "src": "assets/projects/screenshots/abisso/aquarium.png",
+        "title": "Aquarium generated from “recife”",
+        "caption": "Explore a populated aquarium generated from the word “recife”.",
+        "alt": "Aquarium generated from “recife”"
+      },
+      {
+        "src": "assets/projects/screenshots/abisso/customize.png",
+        "title": "Creature customization",
+        "caption": "Adjust the selected creature’s anatomy, appearance and behaviour.",
+        "alt": "Creature customization"
+      }
+    ],
+    "sources": [
+      {
+        "label": "README: generation, sharing and local setup",
+        "url": "https://github.com/gajonormal/ABISSO/blob/main/README.md"
+      },
+      {
+        "label": "Rendering engine source",
+        "url": "https://github.com/gajonormal/ABISSO/tree/main/engine"
+      }
+    ],
+    "architectureDiagram": "assets/projects/architecture/abisso.svg",
+    "architectureFlows": [
+      {
+        "title": "Turn an input into a scene",
+        "steps": [
+          "A word provides a seed and keyword palette; an image supplies dominant colours and a visual signature.",
+          "The seeded generator creates creature anatomy, the habitat and the initial aquarium population.",
+          "Three.js builds geometry and materials from the scene state; movement logic updates the animated rendering."
+        ]
+      },
+      {
+        "title": "Edit, keep and share an aquarium",
+        "steps": [
+          "Editor controls modify creature or environment properties in the shared aquarium state.",
+          "The renderer reflects those changes, while a saved collection entry persists in localStorage.",
+          "JSON export preserves scene data, a share link encodes it in the URL, and PNG export captures the rendered result.",
+          "The HTML widget exporter packages the scene, engine and license for a standalone embedded aquarium."
+        ]
+      }
+    ]
+  },
+  "oportunia": {
+    "context": "Oportunia is a career assistant for Computer Engineering students in Portugal. It brings opportunities from several job boards together and uses the student’s academic profile, technical skills and CV to help explain which vacancies are relevant.",
+    "ownership": "Team project by Bernardo Maia, Leonardo Martins and Gonçalo Nunes, supervised by Professor Osvaldo Santos. The project plan assigns Bernardo the interface design, web frontend and API integration, together with the Azure OpenAI and prompt-engineering work.",
+    "journey": [
+      "Create an account and sign in.",
+      "Build a profile with technical skills, interests, preferred locations and opportunity types.",
+      "Browse the collected opportunities and request personalized recommendations.",
+      "Optionally upload a PDF CV to help populate the profile.",
+      "Generate or retrieve PDF reports through the application’s reporting workflow."
+    ],
+    "architecture": [
+      {
+        "title": "Web application and API",
+        "text": "HTML, JavaScript and Tailwind form the browser interface; Jinja templates are served by Flask. Gunicorn runs the Flask application inside Docker on App Service. The same application handles sessions, profiles, recommendations, documents and reports."
+      },
+      {
+        "title": "Collection and document data",
+        "text": "Azure Functions runs scheduled ingestion separately from web traffic. Source connectors normalize vacancies and use upserts in Cosmos DB through its MongoDB API. User profiles and report metadata live alongside vacancies in separate collections."
+      },
+      {
+        "title": "AI enrichment and matching",
+        "text": "PyPDF2 extracts text from the CV, and Azure OpenAI structures the student information. For recommendations, Flask first scores vacancies by preferences and sends up to twenty candidates for AI ranking and explanations. Profile persistence and recommendation generation are separate requests."
+      },
+      {
+        "title": "Document storage and delivery",
+        "text": "Blob Storage holds CVs, report PDFs and static assets. Cosmos DB holds references and metadata. Flask routes mediate document download and deletion, while SMTP supports account-recovery and notification messages."
+      },
+      {
+        "title": "Provisioning and deployment",
+        "text": "Bicep declares the Azure infrastructure and injects application settings at deployment. GitHub Actions builds and delivers the container image. Provisioning and CI/CD support the runtime services; they are not steps in an ordinary vacancy request."
+      }
+    ],
+    "features": [
+      "Account registration, sign-in, time-limited password recovery and profile management.",
+      "Daily collection and normalization of vacancies from ITJobs, Jooble and Remotive, with upserts to avoid duplicate records.",
+      "Recommendations with compatibility indicators and a personalized explanation.",
+      "CV PDF extraction into structured skills, languages and projects.",
+      "CV storage, download and deletion through Azure Blob Storage.",
+      "On-demand opportunity reports, report history and notification preferences.",
+      "Docker-based hosting, GitHub Actions delivery and Azure infrastructure described in Bicep."
+    ],
+    "setup": {
+      "requirements": [
+        "Python environment with the dependencies in requirements.txt.",
+        "Configured Cosmos DB MongoDB connection, Azure OpenAI endpoint/key and the deployment used by the code.",
+        "Azure Blob Storage and SMTP settings for the associated document and email flows.",
+        "Azure Functions tooling and separate function configuration for scheduled collection."
+      ],
+      "commands": [
+        "python -m venv .venv",
+        ".venv\\Scripts\\activate",
+        "pip install -r requirements.txt",
+        "flask --app app run"
+      ],
+      "note": "Configure the environment before importing app.py: the Azure OpenAI client is constructed at startup. Use .env.example as a starting point, and inspect the additional storage/Function settings in code and deployment configuration. Do not commit credentials."
+    },
+    "limitations": [
+      "A complete session depends on configured cloud services, API quotas and source availability.",
+      "Recommendation processing sends profile information and selected vacancy content to the configured Azure OpenAI service.",
+      "The source limits the AI request to twenty prioritized vacancies; this is not exhaustive ranking of every available vacancy.",
+      "No automated test suite was identified in the inspected local checkout.",
+      "IEFP, FCT and Erasmus+ were part of the initial scope, but their API-access constraints led the delivered version to focus on ITJobs, Jooble and Remotive."
+    ],
+    "validation": "The project report documents the deployed application, an example API response, the opportunity feed, profile and CV flows, and the reporting interface. The inspected Flask source contains the corresponding routes and recommendation pipeline. The report is evidence of the project at the time of delivery; the current availability of its Azure deployment has not been verified.",
+    "process": [
+      {
+        "title": "Adapting to source availability",
+        "text": "The initial plan included institutional and European sources. API-access constraints shifted the delivered application towards ITJobs, Jooble and Remotive, while CV extraction enriched the student side of the match."
+      },
+      {
+        "title": "Keeping AI work focused",
+        "text": "The recommendation endpoint scores vacancies by location and opportunity type before sending twenty candidates to Azure OpenAI. Saving a profile persists its data; recommendation generation is handled separately when the feed requests it."
+      },
+      {
+        "title": "Separating files from application containers",
+        "text": "Uploaded CVs and generated reports belong in Blob Storage, while Cosmos DB stores their metadata and references. This keeps documents available across application-container restarts."
+      },
+      {
+        "title": "Connecting design to implementation",
+        "text": "The report describes a progression from interface mockups to dynamic templates connected to Flask endpoints. The feed, profile, CV and report screens expose the underlying cloud workflows as ordinary user actions."
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "assets/projects/screenshots/oportunia/home.png",
+        "title": "Career opportunities in one place",
+        "caption": "Discover the platform and its profile-based career recommendations.",
+        "alt": "Career opportunities in one place"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/login.png",
+        "title": "Sign in",
+        "caption": "Access a student account to manage preferences and recommendations.",
+        "alt": "Sign in"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/profile.png",
+        "title": "Student profile",
+        "caption": "Keep academic information, professional links and technical skills together.",
+        "alt": "Student profile"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/cv.png",
+        "title": "CV and notifications",
+        "caption": "Upload a CV to populate the profile and choose email and report preferences.",
+        "alt": "CV and notifications"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/recommendations.png",
+        "title": "Personalized opportunity feed",
+        "caption": "Compare vacancies with compatibility indicators and an explanation of each match.",
+        "alt": "Personalized opportunity feed"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/opportunity.png",
+        "title": "Opportunity details",
+        "caption": "Review responsibilities, requirements and the reason a vacancy matches the profile.",
+        "alt": "Opportunity details"
+      },
+      {
+        "src": "assets/projects/screenshots/oportunia/reports.png",
+        "title": "Opportunity reports",
+        "caption": "Generate a PDF summary of recommended opportunities and access saved reports.",
+        "alt": "Opportunity reports"
+      }
+    ],
+    "sources": [
+      {
+        "label": "Application routes and recommendation logic",
+        "url": "https://github.com/gajonormal/Oportunia/blob/main/app.py"
+      },
+      {
+        "label": "Scheduled ingestion",
+        "url": "https://github.com/gajonormal/Oportunia/blob/main/function_app.py"
+      },
+      {
+        "label": "Azure infrastructure",
+        "url": "https://github.com/gajonormal/Oportunia/blob/main/main.bicep"
+      },
+      {
+        "label": "Team repository",
+        "url": "https://github.com/goncalonunes23/Oportunia"
+      },
+      {
+        "label": "Oportunia project report, May 2026 - architecture, delivery and application screens"
+      }
+    ],
+    "architectureDiagram": "assets/projects/architecture/oportunia.svg",
+    "architectureFlows": [
+      {
+        "title": "A vacancy reaches the feed",
+        "steps": [
+          "A daily Timer Trigger starts the Azure Function.",
+          "Connectors fetch available vacancies, normalize fields and upsert them in the Vagas collection.",
+          "The browser requests the feed from Flask, which queries Cosmos DB and returns JSON."
+        ]
+      },
+      {
+        "title": "A profile becomes a recommendation",
+        "steps": [
+          "Profile edits are saved in the Utilizadores collection. An uploaded CV is stored in Blob Storage and its text is extracted with PyPDF2.",
+          "Azure OpenAI structures the extracted CV information; the profile uses the resulting skills, languages and projects.",
+          "When recommendations are requested, Flask pre-ranks vacancies by location and type, then sends up to twenty candidates and the profile to Azure OpenAI.",
+          "The ranked results and explanations return to the feed. The web interface displays compatibility indicators and the reasons for each match."
+        ]
+      },
+      {
+        "title": "Files and background messages",
+        "steps": [
+          "The application generates report PDFs, uploads them to Blob Storage and stores their metadata in Cosmos DB.",
+          "Authenticated download and delete routes mediate access to CVs and reports.",
+          "SMTP delivers time-limited password-reset links; the daily collection function also sends notifications to users who enabled them."
+        ]
+      }
+    ]
+  }
+}

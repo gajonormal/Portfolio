@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 652">
+  <defs>
+    <linearGradient id="shell" x2=".18" y2="1"><stop stop-color="#727172"/><stop offset=".47" stop-color="#424242"/><stop offset="1" stop-color="#202020"/></linearGradient>
+    <linearGradient id="edge" x2=".8" y2="1"><stop stop-color="#aaa"/><stop offset=".38" stop-color="#606060"/><stop offset="1" stop-color="#151515"/></linearGradient>
+    <linearGradient id="lcd" x2="0" y2="1"><stop stop-color="#24282c"/><stop offset="1" stop-color="#101215"/></linearGradient>
+    <radialGradient id="button"><stop stop-color="#7c7c7c"/><stop offset="1" stop-color="#454545"/></radialGradient>
+  </defs>
+  <rect x="30.5" y="30.5" width="369" height="591" rx="30" fill="url(#shell)" stroke="url(#edge)"/>
+  <rect x="54" y="54" width="322" height="260" rx="7" fill="url(#lcd)" stroke="#090909" stroke-width="5"/>
+  <circle cx="215" cy="468" r="110" fill="#2a2a2a" stroke="#1b1b1b"/>
+  <circle cx="215" cy="468" r="44" fill="url(#button)" stroke="#1b1b1b"/>
+  <text x="215" y="389" fill="#eee" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold">MENU</text>
+  <path fill="#eee" d="M123 462h2v12h-2zM136 462v12l-10-6zM147 462v12l-10-6zM307 462h-2v12h2zM294 462v12l10-6zM283 462v12l10-6zM205 544v12l10-6zM218 544h3v12h-3zM224 544h3v12h-3z"/>
+</svg>

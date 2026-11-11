@@ -1,0 +1,97 @@
+{
+  "oportunia": {
+    "title": "Oportunia - aplicação e serviços na nuvem",
+    "note": "Pedidos da aplicação e recolha agendada. O Bicep cria os recursos Azure e o GitHub Actions compila e publica a imagem Docker.",
+    "nodes": [
+      ["APIs de portais de emprego", "ITJobs · Jooble · Remotive"],
+      ["Azure Functions", "Recolha diária · normalização · upsert"],
+      ["Azure OpenAI", "Estruturar CV · ordenar vagas"],
+      ["Interface web", "HTML · JavaScript · Tailwind · Jinja"],
+      ["Flask no App Service", "Sessões · API · recomendações · PDF"],
+      ["Cosmos DB / API MongoDB", "Utilizadores · vagas · metadados"],
+      ["Serviço SMTP", "Recuperar palavra-passe · notificações"],
+      ["Azure Blob Storage", "Currículos · relatórios PDF · ficheiros"]
+    ],
+    "edges": [
+      "Recolher vagas",
+      "Gravar vagas normalizadas",
+      "HTTPS / JSON",
+      "Perfis e vagas",
+      "Perfil + até 20 vagas",
+      "Enviar / transferir ficheiros",
+      "Token / email",
+      "Notificações diárias"
+    ]
+  },
+  "visitar": {
+    "title": "VisitAR - preparação com ligação e visita sem ligação",
+    "note": "A sincronização prepara os conteúdos locais. Durante a visita, a aplicação combina os ficheiros do dispositivo com sensores de localização e movimento.",
+    "nodes": [
+      ["GPS e sensores de movimento", "Posição · orientação do dispositivo"],
+      ["Serviços Firebase", "Autenticação · conteúdos · multimédia"],
+      ["Visitante", "Exploração · percursos · passaporte"],
+      ["Aplicação Flutter", "Ecrãs · estado · lógica da visita"],
+      ["Armazenamento local", "Multimédia descarregada · dados"],
+      ["Serviço de rotas OSRM", "Cálculo de percursos pedonais"],
+      ["Proximidade e passaporte", "Raio Haversine · locais · distintivos"],
+      ["Panorama e áudio", "Visor de 360° · giroscópio · audioguia"]
+    ],
+    "edges": [
+      "Interações",
+      "Localização / orientação",
+      "Sincronizar com ligação",
+      "Descarregar / ler ficheiros",
+      "Pedir percurso pedonal",
+      "Distância e progresso",
+      "Multimédia local",
+      "Selecionar e controlar"
+    ]
+  },
+  "nethergate": {
+    "title": "Nethergate - interface de computador e motor independente",
+    "note": "A interface nativa liga-se a um motor local. O mesmo núcleo Rust suporta a interface de linha de comandos.",
+    "nodes": [
+      ["Linha de comandos", "nethergated · núcleo Rust partilhado"],
+      ["Motor local em Rust", "Gestão de servidores · validação · tarefas"],
+      ["Administrador do servidor", "Biblioteca · consola · administração"],
+      ["Interface React", "API tipada · consultas periódicas"],
+      ["Janela nativa Tauri", "Diálogos nativos · sessão protegida"],
+      ["Serviços externos opcionais", "Modrinth · túneis · cópias na nuvem"],
+      ["Biblioteca e ficheiros locais", "Mundos · manifestos JSON · cópias"],
+      ["Processos dos servidores Java", "Paper / Fabric · registos · jogadores"]
+    ],
+    "edges": [
+      "Comandos do núcleo",
+      "Interações na aplicação",
+      "Ações tipadas",
+      "Loopback autenticado",
+      "Iniciar / parar / comando",
+      "Configuração / restauro",
+      "APIs e transferências"
+    ]
+  },
+  "abisso": {
+    "title": "ABISSO - geração procedural no navegador",
+    "note": "O aquário é gerado e renderizado localmente. A exportação prepara a cena para guardar, partilhar ou incorporar.",
+    "nodes": [
+      ["Entrada", "Palavra · imagem · semente aleatória"],
+      ["Regras de inspiração", "Palavras-chave · cores dominantes"],
+      ["Armazenamento no navegador", "Coleção local · dados guardados"],
+      ["Gerador com semente", "Anatomia · habitat · população inicial"],
+      ["Estado do aquário", "Criaturas · ambiente · comportamento"],
+      ["Guardar e partilhar", "PNG · JSON · URL · widget HTML"],
+      ["Interface de personalização", "Criatura · aquário · criar · partilhar"],
+      ["Three.js / WebGL", "Geometria · shaders · animação"]
+    ],
+    "edges": [
+      "Extrair semente e paleta",
+      "Parâmetros de geração",
+      "Aquário inicial",
+      "Guardar / abrir coleção",
+      "Alterar propriedades",
+      "Desenhar e animar",
+      "Serializar / exportar",
+      "PNG renderizado"
+    ]
+  }
+}

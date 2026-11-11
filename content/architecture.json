@@ -1,0 +1,665 @@
+{
+  "oportunia": {
+    "title": "Oportunia - application and cloud services",
+    "note": "Runtime requests and scheduled ingestion. Bicep provisions the Azure resources; GitHub Actions builds and delivers the Docker image.",
+    "nodes": [
+      {
+        "id": "sources",
+        "title": "Job-board APIs",
+        "description": "ITJobs · Jooble · Remotive",
+        "x": 35,
+        "y": 55,
+        "kind": "external"
+      },
+      {
+        "id": "functions",
+        "title": "Azure Functions",
+        "description": "Daily collection · normalization · upsert",
+        "x": 355,
+        "y": 55,
+        "kind": "compute"
+      },
+      {
+        "id": "ai",
+        "title": "Azure OpenAI",
+        "description": "CV structuring · vacancy ranking",
+        "x": 675,
+        "y": 55,
+        "kind": "external"
+      },
+      {
+        "id": "browser",
+        "title": "Web interface",
+        "description": "HTML · JavaScript · Tailwind · Jinja",
+        "x": 35,
+        "y": 260,
+        "kind": "app"
+      },
+      {
+        "id": "flask",
+        "title": "Flask on App Service",
+        "description": "Sessions · API · matching · PDF reports",
+        "x": 355,
+        "y": 260,
+        "kind": "compute"
+      },
+      {
+        "id": "db",
+        "title": "Cosmos DB / MongoDB API",
+        "description": "Users · vacancies · report metadata",
+        "x": 675,
+        "y": 260,
+        "kind": "data"
+      },
+      {
+        "id": "mail",
+        "title": "SMTP service",
+        "description": "Password-reset links · notifications",
+        "x": 355,
+        "y": 465,
+        "kind": "external"
+      },
+      {
+        "id": "blob",
+        "title": "Azure Blob Storage",
+        "description": "CV documents · PDF reports · assets",
+        "x": 675,
+        "y": 465,
+        "kind": "data"
+      }
+    ],
+    "edges": [
+      {
+        "source": "sources",
+        "target": "functions",
+        "label": "Fetch vacancies",
+        "points": [
+          [285, 102],
+          [355, 102]
+        ],
+        "labelX": 320,
+        "labelY": 87
+      },
+      {
+        "source": "functions",
+        "target": "db",
+        "label": "Upsert normalized vacancies",
+        "points": [
+          [605, 102],
+          [640, 102],
+          [640, 230],
+          [800, 230],
+          [800, 260]
+        ],
+        "labelX": 760,
+        "labelY": 217
+      },
+      {
+        "source": "browser",
+        "target": "flask",
+        "label": "HTTPS / JSON",
+        "points": [
+          [285, 307],
+          [355, 307]
+        ],
+        "labelX": 320,
+        "labelY": 291
+      },
+      {
+        "source": "flask",
+        "target": "db",
+        "label": "Profiles and vacancies",
+        "points": [
+          [605, 307],
+          [675, 307]
+        ],
+        "labelX": 640,
+        "labelY": 290
+      },
+      {
+        "source": "flask",
+        "target": "ai",
+        "label": "Profile + up to 20 candidates",
+        "points": [
+          [565, 260],
+          [565, 191],
+          [800, 191],
+          [800, 149]
+        ],
+        "labelX": 711,
+        "labelY": 178
+      },
+      {
+        "source": "flask",
+        "target": "blob",
+        "label": "Upload / download files",
+        "points": [
+          [605, 330],
+          [640, 330],
+          [640, 435],
+          [800, 435],
+          [800, 465]
+        ],
+        "labelX": 751,
+        "labelY": 422
+      },
+      {
+        "source": "flask",
+        "target": "mail",
+        "label": "Reset token / email",
+        "points": [
+          [480, 354],
+          [480, 465]
+        ],
+        "labelX": 550,
+        "labelY": 407
+      },
+      {
+        "source": "functions",
+        "target": "mail",
+        "label": "Daily notifications",
+        "points": [
+          [355, 125],
+          [322, 125],
+          [322, 512],
+          [355, 512]
+        ],
+        "labelX": 239,
+        "labelY": 425
+      }
+    ]
+  },
+  "visitar": {
+    "title": "VisitAR - online preparation and offline visit",
+    "note": "Cloud synchronization prepares local content. The outdoor experience combines the device cache with location and motion sensors.",
+    "nodes": [
+      {
+        "id": "sensors",
+        "title": "GPS and motion sensors",
+        "description": "Position · device orientation",
+        "x": 35,
+        "y": 55,
+        "kind": "external"
+      },
+      {
+        "id": "firebase",
+        "title": "Firebase services",
+        "description": "Authentication · content · media",
+        "x": 675,
+        "y": 55,
+        "kind": "external"
+      },
+      {
+        "id": "visitor",
+        "title": "Visitor",
+        "description": "Explore · routes · passport",
+        "x": 35,
+        "y": 260,
+        "kind": "app"
+      },
+      {
+        "id": "app",
+        "title": "Flutter application",
+        "description": "Screens · state · visit logic",
+        "x": 355,
+        "y": 260,
+        "kind": "compute"
+      },
+      {
+        "id": "cache",
+        "title": "Local device storage",
+        "description": "Downloaded multimedia · saved data",
+        "x": 675,
+        "y": 260,
+        "kind": "data"
+      },
+      {
+        "id": "routing",
+        "title": "OSRM routing service",
+        "description": "Walking-route calculation",
+        "x": 35,
+        "y": 465,
+        "kind": "external"
+      },
+      {
+        "id": "passport",
+        "title": "Proximity and passport",
+        "description": "Haversine radius · visited POIs · badges",
+        "x": 355,
+        "y": 465,
+        "kind": "compute"
+      },
+      {
+        "id": "panorama",
+        "title": "Panorama and audio",
+        "description": "360° viewer · gyroscope · audioguide",
+        "x": 675,
+        "y": 465,
+        "kind": "app"
+      }
+    ],
+    "edges": [
+      {
+        "source": "visitor",
+        "target": "app",
+        "label": "Interactions",
+        "points": [
+          [285, 307],
+          [355, 307]
+        ],
+        "labelX": 320,
+        "labelY": 291
+      },
+      {
+        "source": "sensors",
+        "target": "app",
+        "label": "Location / orientation",
+        "points": [
+          [160, 149],
+          [160, 205],
+          [480, 205],
+          [480, 260]
+        ],
+        "labelX": 325,
+        "labelY": 191
+      },
+      {
+        "source": "app",
+        "target": "firebase",
+        "label": "Synchronize when online",
+        "points": [
+          [605, 282],
+          [640, 282],
+          [640, 102],
+          [675, 102]
+        ],
+        "labelX": 592,
+        "labelY": 177
+      },
+      {
+        "source": "app",
+        "target": "cache",
+        "label": "Download / read cached media",
+        "points": [
+          [605, 322],
+          [675, 322]
+        ],
+        "labelX": 640,
+        "labelY": 345
+      },
+      {
+        "source": "app",
+        "target": "routing",
+        "label": "Request a walking route",
+        "points": [
+          [355, 333],
+          [320, 333],
+          [320, 512],
+          [285, 512]
+        ],
+        "labelX": 217,
+        "labelY": 421
+      },
+      {
+        "source": "app",
+        "target": "passport",
+        "label": "Distance + route progress",
+        "points": [
+          [480, 354],
+          [480, 465]
+        ],
+        "labelX": 552,
+        "labelY": 408
+      },
+      {
+        "source": "cache",
+        "target": "panorama",
+        "label": "Local multimedia",
+        "points": [
+          [800, 354],
+          [800, 465]
+        ],
+        "labelX": 866,
+        "labelY": 407
+      },
+      {
+        "source": "app",
+        "target": "panorama",
+        "label": "Select and control viewer",
+        "points": [
+          [585, 354],
+          [585, 435],
+          [720, 435],
+          [720, 465]
+        ],
+        "labelX": 680,
+        "labelY": 421
+      }
+    ]
+  },
+  "nethergate": {
+    "title": "Nethergate - desktop shell and independent engine",
+    "note": "The native desktop shell connects to a local engine. The same Rust core also supports the command-line interface.",
+    "nodes": [
+      {
+        "id": "cli",
+        "title": "Command-line interface",
+        "description": "nethergated · shared Rust core",
+        "x": 355,
+        "y": 55,
+        "kind": "app"
+      },
+      {
+        "id": "engine",
+        "title": "Local Rust engine",
+        "description": "Server lifecycle · validation · jobs",
+        "x": 675,
+        "y": 55,
+        "kind": "compute"
+      },
+      {
+        "id": "user",
+        "title": "Server owner",
+        "description": "Library · console · administration",
+        "x": 35,
+        "y": 260,
+        "kind": "app"
+      },
+      {
+        "id": "react",
+        "title": "React interface",
+        "description": "Typed API contract · polling hooks",
+        "x": 355,
+        "y": 260,
+        "kind": "app"
+      },
+      {
+        "id": "tauri",
+        "title": "Tauri desktop shell",
+        "description": "Native dialogs · protected session",
+        "x": 675,
+        "y": 260,
+        "kind": "compute"
+      },
+      {
+        "id": "external",
+        "title": "Optional external services",
+        "description": "Modrinth · tunnels · cloud backups",
+        "x": 35,
+        "y": 465,
+        "kind": "external"
+      },
+      {
+        "id": "files",
+        "title": "Local library and files",
+        "description": "Worlds · JSON manifests · backups",
+        "x": 355,
+        "y": 465,
+        "kind": "data"
+      },
+      {
+        "id": "java",
+        "title": "Java server processes",
+        "description": "Paper / Fabric · logs · players",
+        "x": 675,
+        "y": 465,
+        "kind": "compute"
+      }
+    ],
+    "edges": [
+      {
+        "source": "cli",
+        "target": "engine",
+        "label": "Core commands",
+        "points": [
+          [605, 102],
+          [675, 102]
+        ],
+        "labelX": 640,
+        "labelY": 86
+      },
+      {
+        "source": "user",
+        "target": "react",
+        "label": "Desktop interactions",
+        "points": [
+          [285, 307],
+          [355, 307]
+        ],
+        "labelX": 320,
+        "labelY": 290
+      },
+      {
+        "source": "react",
+        "target": "tauri",
+        "label": "Typed invoke actions",
+        "points": [
+          [605, 307],
+          [675, 307]
+        ],
+        "labelX": 640,
+        "labelY": 289
+      },
+      {
+        "source": "tauri",
+        "target": "engine",
+        "label": "Authenticated loopback",
+        "points": [
+          [800, 260],
+          [800, 149]
+        ],
+        "labelX": 873,
+        "labelY": 204
+      },
+      {
+        "source": "engine",
+        "target": "java",
+        "label": "Start / stop / command",
+        "points": [
+          [925, 102],
+          [963, 102],
+          [963, 512],
+          [925, 512]
+        ],
+        "labelX": 935,
+        "labelY": 397
+      },
+      {
+        "source": "engine",
+        "target": "files",
+        "label": "Configuration / restore state",
+        "points": [
+          [675, 126],
+          [640, 126],
+          [640, 425],
+          [480, 425],
+          [480, 465]
+        ],
+        "labelX": 518,
+        "labelY": 411
+      },
+      {
+        "source": "engine",
+        "target": "external",
+        "label": "APIs and optional transfers",
+        "points": [
+          [800, 55],
+          [800, 40],
+          [13, 40],
+          [13, 512],
+          [35, 512]
+        ],
+        "labelX": 135,
+        "labelY": 180
+      }
+    ]
+  },
+  "abisso": {
+    "title": "Abisso - procedural generation in the browser",
+    "note": "Aquarium generation and rendering run locally. Exports package the scene for storage, sharing or embedding.",
+    "nodes": [
+      {
+        "id": "input",
+        "title": "Input",
+        "description": "Word · image · random seed",
+        "x": 35,
+        "y": 55,
+        "kind": "app"
+      },
+      {
+        "id": "inspiration",
+        "title": "Inspiration rules",
+        "description": "Text keywords · dominant image colours",
+        "x": 355,
+        "y": 55,
+        "kind": "compute"
+      },
+      {
+        "id": "storage",
+        "title": "Browser storage",
+        "description": "Local collection · saved scene data",
+        "x": 675,
+        "y": 55,
+        "kind": "data"
+      },
+      {
+        "id": "generation",
+        "title": "Seeded generator",
+        "description": "Anatomy · habitat · initial population",
+        "x": 355,
+        "y": 260,
+        "kind": "compute"
+      },
+      {
+        "id": "state",
+        "title": "Aquarium state",
+        "description": "Creatures · environment · behaviour",
+        "x": 675,
+        "y": 260,
+        "kind": "data"
+      },
+      {
+        "id": "exports",
+        "title": "Save and share",
+        "description": "PNG · JSON · link · HTML widget",
+        "x": 35,
+        "y": 465,
+        "kind": "app"
+      },
+      {
+        "id": "editor",
+        "title": "Customization interface",
+        "description": "Creature · aquarium · create · share",
+        "x": 355,
+        "y": 465,
+        "kind": "app"
+      },
+      {
+        "id": "renderer",
+        "title": "Three.js / WebGL",
+        "description": "Geometry · shaders · animated scene",
+        "x": 675,
+        "y": 465,
+        "kind": "compute"
+      }
+    ],
+    "edges": [
+      {
+        "source": "input",
+        "target": "inspiration",
+        "label": "Extract seed and palette",
+        "points": [
+          [285, 102],
+          [355, 102]
+        ],
+        "labelX": 320,
+        "labelY": 86
+      },
+      {
+        "source": "inspiration",
+        "target": "generation",
+        "label": "Generation parameters",
+        "points": [
+          [480, 149],
+          [480, 260]
+        ],
+        "labelX": 555,
+        "labelY": 204
+      },
+      {
+        "source": "generation",
+        "target": "state",
+        "label": "Initial aquarium",
+        "points": [
+          [605, 307],
+          [675, 307]
+        ],
+        "labelX": 640,
+        "labelY": 291
+      },
+      {
+        "source": "state",
+        "target": "storage",
+        "label": "Save / load collection",
+        "points": [
+          [800, 260],
+          [800, 149]
+        ],
+        "labelX": 877,
+        "labelY": 204
+      },
+      {
+        "source": "editor",
+        "target": "state",
+        "label": "Change selected properties",
+        "points": [
+          [605, 492],
+          [640, 492],
+          [640, 332],
+          [675, 332]
+        ],
+        "labelX": 640,
+        "labelY": 396
+      },
+      {
+        "source": "state",
+        "target": "renderer",
+        "label": "Draw and animate",
+        "points": [
+          [800, 354],
+          [800, 465]
+        ],
+        "labelX": 861,
+        "labelY": 407
+      },
+      {
+        "source": "state",
+        "target": "exports",
+        "label": "Serialize scene / export",
+        "points": [
+          [840, 354],
+          [840, 388],
+          [310, 388],
+          [310, 500],
+          [285, 500]
+        ],
+        "labelX": 455,
+        "labelY": 375
+      },
+      {
+        "source": "renderer",
+        "target": "exports",
+        "label": "Rendered PNG",
+        "points": [
+          [675, 512],
+          [650, 512],
+          [650, 440],
+          [160, 440],
+          [160, 465]
+        ],
+        "labelX": 400,
+        "labelY": 452
+      }
+    ]
+  }
+}

@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#29233d" />
+    <meta
+      name="description"
+      content="Bernardo Maia’s software engineering portfolio. Projects, technologies, and GitHub contributions."
+    />
+    <title>Bernardo Maia</title>
+    <style>
+      body:not(.logged-in, .locking) #desktop {
+        visibility: hidden;
+      }
+    </style>
+    <link
+      rel="preload"
+      as="image"
+      href="assets/images/wallpapers/leopard-aurora.webp"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="assets/icons/logochrome.svg?v=4b20f40a0838"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="snow-leopard.css" />
+    <link rel="stylesheet" href="safari.css" />
+    <script src="genie.js" defer></script>
+    <script src="safari-content.js" defer></script>
+    <script src="project-details.js" defer></script>
+    <script src="content/wiki-strings.pt.js" defer></script>
+    <script src="content/wiki-projects.pt.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="safari.js" defer></script>
+    <script src="desktop-admin.js" defer></script>
+  </head>
+
+  <body>
+    <header class="menubar" inert>
+      <nav aria-label="Desktop menu">
+        <button
+          id="system-menu-button"
+          aria-label="System menu"
+          aria-expanded="false"
+        >
+          <img
+            src="assets/icons/logochrome.svg?v=4b20f40a0838"
+            alt=""
+            class="brand-mark"
+          />
+        </button>
+        <button class="app-name" id="active-app">Finder</button>
+        <button data-menu="file-menu">File</button
+        ><button class="safari-menu-button" data-menu="safari-edit-menu" hidden>
+          Edit</button
+        ><button data-menu="view-menu">View</button
+        ><button
+          class="safari-menu-button"
+          data-menu="safari-history-menu"
+          hidden
+        >
+          History</button
+        ><button
+          class="safari-menu-button"
+          data-menu="safari-bookmarks-menu"
+          hidden
+        >
+          Bookmarks</button
+        ><button
+          class="safari-menu-button"
+          data-menu="safari-window-menu"
+          hidden
+        >
+          Window</button
+        ><button data-menu="help-menu">Help</button>
+      </nav>
+      <div class="status-menu">
+        <button
+          type="button"
+          id="sound-toggle"
+          aria-label="Startup sound volume"
+          aria-controls="sound-menu"
+          aria-expanded="false"
+          title="Startup sound volume"
+        >
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+            <path fill="currentColor" d="M1 6h3l4-4v12l-4-4H1z" />
+            <path
+              class="sound-waves"
+              d="M10 5a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+            />
+            <path
+              class="sound-mute"
+              d="m10 6 4 4m0-4-4 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+        <time id="datetime"></time
+        ><button
+          id="spotlight-toggle"
+          aria-label="Search portfolio"
+          title="Spotlight (Ctrl/⌘ K)"
+        >
+          <svg
+            class="search-glyph"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="8.25" cy="8.25" r="5.25" />
+            <path d="m12 12 5 5" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <div id="sound-menu" class="menu" hidden>
+      <input
+        id="sound-volume"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        aria-label="Startup sound volume"
+        aria-orientation="vertical"
+      />
+    </div>
+    <div id="system-menu" class="menu menubar-menu" hidden>
+      <button data-open="about">About This Portfolio</button>
+      <hr />
+      <button data-open="settings">System Preferences…</button
+      ><button id="menu-search">Spotlight… <kbd>⌘ K</kbd></button>
+      <hr />
+      <button id="lock">Lock Screen</button>
+    </div>
+    <div id="file-menu" class="menu menubar-menu" hidden>
+      <button data-open="finder">New Finder Window</button
+      ><button data-open="notes">Open Notes</button>
+      <hr />
+      <button id="close-active">Close Window <kbd>Esc</kbd></button>
+    </div>
+    <div id="view-menu" class="menu menubar-menu" hidden>
+      <button id="show-desktop">Show Desktop <kbd>Alt D</kbd></button
+      ><button id="reset-layout">Arrange Windows</button>
+      <hr />
+      <button data-open="settings">Change Desktop Background…</button>
+    </div>
+    <div id="safari-edit-menu" class="menu menubar-menu" hidden>
+      <button data-safari-command="address">Select Address</button
+      ><button data-safari-command="search">Search the Archive</button>
+    </div>
+    <div id="safari-history-menu" class="menu menubar-menu" hidden>
+      <button data-safari-command="back">Back</button
+      ><button data-safari-command="forward">Forward</button>
+      <hr />
+      <div id="safari-recent"></div>
+    </div>
+    <div id="safari-bookmarks-menu" class="menu menubar-menu" hidden>
+      <button data-safari-page="/">Start Page</button
+      ><button data-safari-page="/wiki/Bernardo_Maia">About me</button
+      ><button data-safari-page="/wiki/Projects">Projects</button
+      ><button data-safari-page="/wiki/Contact">Contact</button
+      ><button data-safari-page="/web">Web of 2009</button>
+    </div>
+    <div id="safari-window-menu" class="menu menubar-menu" hidden>
+      <button data-safari-command="new-tab">New Tab</button
+      ><button data-safari-command="close-tab">Close Tab</button>
+      <hr />
+      <button data-safari-command="minimize">Minimize</button
+      ><button data-safari-command="zoom">Zoom</button>
+    </div>
+    <div id="help-menu" class="menu menubar-menu" hidden>
+      <p><strong>Welcome to BMaiaOS</strong></p>
+      <p>
+        Click an icon to open an app.<br />Drag title bars to move windows.<br />Drag
+        the corner to resize.
+      </p>
+      <hr />
+      <p>
+        <kbd>⌘ / Ctrl K</kbd> Search<br /><kbd>Alt D</kbd> Show desktop<br /><kbd
+          >Esc</kbd
+        >
+        Close front window<br /><kbd>← →</kbd> Browse projects
+      </p>
+      <button data-open="about">About BMaiaOS</button>
+    </div>
+    <main id="desktop" aria-label="Portfolio desktop" inert>
+      <div class="desktop-files">
+        <button class="desktop-file" data-open="finder">
+          <span class="desktop-file-icon"
+            ><img src="assets/icons/drive.png" alt="" /></span
+          ><span>My work</span>
+        </button>
+        <button class="desktop-file" data-open="portrait">
+          <span class="desktop-file-icon"
+            ><img src="assets/images/hi.webp" alt="" /></span
+          ><span>hi.webp</span>
+        </button>
+        <button class="desktop-file" data-open="cv">
+          <span class="desktop-file-icon"
+            ><img src="assets/icons/cv-txt.png" alt="" /></span
+          ><span>CV.txt</span>
+        </button>
+        <button class="desktop-file" data-open="notes">
+          <span class="desktop-file-icon"
+            ><img src="assets/icons/macos-10.6/stickies.png" alt="" /></span
+          ><span>Hire me</span>
+        </button>
+        <button
+          class="desktop-file"
+          data-desktop-id="github"
+          data-desktop-page="/wiki/GitHub"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/github-icon.svg" alt="" /></span
+          ><span>GitHub</span>
+        </button>
+        <button
+          class="desktop-file"
+          type="button"
+          data-desktop-id="linkedin"
+          data-desktop-url="https://www.linkedin.com/in/bernardo-maia-bpm/"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/linkedin-icon.svg" alt="" /></span
+          ><span>LinkedIn</span>
+        </button>
+        <button
+          class="desktop-file"
+          data-desktop-id="visitar"
+          data-desktop-page="/wiki/Projects/visitar"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/visitar-icon.svg" alt="" /></span
+          ><span>VisitAR</span>
+        </button>
+        <button
+          class="desktop-file"
+          data-desktop-id="nethergate"
+          data-desktop-page="/wiki/Projects/nethergate"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/nethergate-icon.svg" alt="" /></span
+          ><span>Nethergate</span>
+        </button>
+        <button
+          class="desktop-file"
+          data-desktop-id="abisso"
+          data-desktop-page="/wiki/Projects/abisso"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/abisso-icon.svg" alt="" /></span
+          ><span>ABISSO</span>
+        </button>
+        <button
+          class="desktop-file"
+          data-desktop-id="oportunia"
+          data-desktop-page="/wiki/Projects/oportunia"
+        >
+          <span class="desktop-file-icon"
+            ><img src="assets/projects/oportunia-icon.svg" alt="" /></span
+          ><span>Oportunia</span>
+        </button>
+        <button class="desktop-file" type="button" data-open="ipod">
+          <span class="desktop-file-icon"
+            ><img src="assets/icons/ipod-classic.png" alt="" /></span
+          ><span>iPod Classic</span>
+        </button>
+      </div>
+      <div id="windows">
+        <section
+          class="window cv"
+          id="cv-window"
+          data-app="cv"
+          aria-label="CV.txt"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">CV.txt - TextEdit</span>
+          </header>
+          <div class="cv-document">
+            <pre class="cv-page" aria-label="CV document"></pre>
+          </div>
+        </section>
+        <section
+          class="window finder"
+          id="finder-window"
+          data-app="finder"
+          aria-label="My work"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">My work</span
+            ><button
+              class="title-search"
+              id="finder-spotlight"
+              aria-label="Open Spotlight"
+            >
+              ⌕
+            </button>
+          </header>
+          <div class="finder-toolbar">
+            <div class="finder-navigation">
+              <button id="folder-back" aria-label="Previous folder" disabled>
+                ◀</button
+              ><button id="folder-forward" aria-label="Next folder" disabled>
+                ▶
+              </button>
+            </div>
+            <div class="breadcrumb">
+              <strong id="folder-name">My work</strong>
+            </div>
+            <div class="view-controls">
+              <button
+                id="grid-view"
+                class="selected"
+                aria-label="Grid view"
+                aria-pressed="true"
+              >
+                <svg
+                  class="finder-toolbar-icon"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 3h3.5v3.5H3zm6.5 0H13v3.5H9.5zM3 9.5h3.5V13H3zm6.5 0H13V13H9.5z"
+                  />
+                </svg></button
+              ><button
+                id="list-view"
+                aria-label="List view"
+                aria-pressed="false"
+              >
+                <svg
+                  class="finder-toolbar-icon"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  aria-hidden="true"
+                >
+                  <path d="M2.5 3.5h11m-11 3h11m-11 3h11m-11 3h11" />
+                </svg>
+              </button>
+            </div>
+            <button
+              class="toolbar-action"
+              id="quicklook-selected"
+              aria-label="Quick Look"
+            >
+              <svg
+                class="finder-toolbar-icon finder-eye-icon"
+                viewBox="0 0 20 16"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M.8 8C3.2 4.3 6.4 2.4 10 2.4s6.8 1.9 9.2 5.6c-2.4 3.7-5.6 5.6-9.2 5.6S3.2 11.7.8 8Zm9.2-3.4a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"
+                />
+                <circle cx="10" cy="8" r="1.8" />
+              </svg></button
+            ><button
+              class="toolbar-action"
+              id="finder-actions"
+              aria-label="Finder actions"
+            >
+              <svg
+                class="finder-toolbar-icon finder-gear-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.04 3.18L8.42 1.04L11.58 1.04L11.96 3.18L13.44 3.79L15.22 2.55L17.45 4.78L16.21 6.56L16.82 8.04L18.96 8.42L18.96 11.58L16.82 11.96L16.21 13.44L17.45 15.22L15.22 17.45L13.44 16.21L11.96 16.82L11.58 18.96L8.42 18.96L8.04 16.82L6.56 16.21L4.78 17.45L2.55 15.22L3.79 13.44L3.18 11.96L1.04 11.58L1.04 8.42L3.18 8.04L3.79 6.56L2.55 4.78L4.78 2.55L6.56 3.79ZM10 6.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"
+                /></svg
+              ><svg
+                class="finder-menu-caret"
+                viewBox="0 0 8 5"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M0 0h8L4 5Z" />
+              </svg></button
+            ><label class="finder-search"
+              ><svg
+                class="search-glyph"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="8.25" cy="8.25" r="5.25" />
+                <path d="m12 12 5 5" /></svg
+              ><input
+                id="work-search"
+                type="search"
+                aria-label="Search projects"
+            /></label>
+          </div>
+          <div class="finder-body">
+            <aside class="sidebar">
+              <h2>FAVORITES</h2>
+              <button class="selected" data-folder="all">
+                ▦ <span>All work</span
+                ><small id="project-total"></small></button
+              ><button data-folder="web">
+                ▧ <span>Web &amp; cloud</span
+                ><small id="project-total-web"></small></button
+              ><button data-folder="apps">
+                ◉ <span>Mobile &amp; desktop</span
+                ><small id="project-total-apps"></small>
+              </button>
+              <h2>PLACES</h2>
+              <button data-safari-page="/wiki/Bernardo_Maia">
+                ▤ <span>About me</span></button
+              ><button data-open="mail">✉ <span>Contact</span></button>
+              <h2>ELSEWHERE</h2>
+              <a
+                href="https://github.com/gajonormal"
+                target="_blank"
+                rel="noopener noreferrer"
+                >↗ <span>GitHub</span></a
+              ><a
+                href="https://www.linkedin.com/in/bernardo-maia-bpm/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >↗ <span>LinkedIn</span></a
+              ><button type="button" data-open="mail">
+                ✉ <span>Email</span>
+              </button>
+              <div class="sidebar-footer">
+                <span class="online-dot"></span> Made to be explored.
+              </div>
+            </aside>
+            <div class="finder-main">
+              <div class="folder-heading">
+                <div>
+                  <p>SOFTWARE PROJECTS</p>
+                  <h1>My work</h1>
+                </div>
+                <span>Web, mobile, and desktop.</span>
+              </div>
+              <div id="gallery-grid" class="gallery-grid"></div>
+              <p id="empty-search" hidden>
+                No projects found. Try another search.
+              </p>
+            </div>
+          </div>
+          <footer class="window-status">
+            <span id="item-count"></span
+            ><span>Double-click to open in Safari · Space for Quick Look</span>
+          </footer>
+        </section>
+        <section
+          class="window safari"
+          id="safari-window"
+          data-app="safari"
+          aria-label="Safari"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">My archive</span>
+          </header>
+          <div class="safari-chrome">
+            <div class="safari-toolbar">
+              <div class="safari-arrows">
+                <button
+                  type="button"
+                  data-safari-command="back"
+                  aria-label="Go back"
+                  title="Back"
+                  disabled
+                >
+                  ◀</button
+                ><button
+                  type="button"
+                  data-safari-command="forward"
+                  aria-label="Go forward"
+                  title="Forward"
+                  disabled
+                >
+                  ▶
+                </button>
+              </div>
+              <div class="safari-location">
+                <button
+                  type="button"
+                  data-safari-command="new-tab"
+                  aria-label="New tab"
+                  title="New Tab"
+                >
+                  +
+                </button>
+                <form
+                  id="safari-address-form"
+                  role="search"
+                  aria-label="Safari address"
+                >
+                  <img src="assets/icons/safari.png" alt="" /><input
+                    id="safari-address"
+                    type="text"
+                    aria-label="Address or archived web search"
+                    placeholder="Enter an address or search the archived web"
+                    spellcheck="false"
+                    autocomplete="off"
+                  /><button
+                    type="button"
+                    data-safari-command="reload"
+                    aria-label="Reload page"
+                    title="Reload"
+                  >
+                    ↻
+                  </button>
+                </form>
+              </div>
+              <form
+                id="safari-search-form"
+                role="search"
+                aria-label="Search the archive"
+              >
+                <span class="search-icon" aria-hidden="true"></span
+                ><input
+                  id="safari-search"
+                  type="search"
+                  aria-label="Search the archive"
+                  placeholder="Search the archive"
+                  autocomplete="off"
+                />
+              </form>
+            </div>
+            <div class="safari-bookmark-bar">
+              <nav class="safari-bookmarks" aria-label="Bookmarks">
+                <button
+                  type="button"
+                  data-safari-page="/"
+                  aria-label="Start page"
+                  title="Start Page"
+                >
+                  <svg
+                    width="17"
+                    height="14"
+                    viewBox="0 0 20 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M10 4C7 2 4 2 2 3v10c3-1 6-1 8 1 2-2 5-2 8-1V3c-2-1-5-1-8 1v10"
+                    />
+                  </svg></button
+                ><button
+                  type="button"
+                  data-safari-page="/wiki/Projects"
+                  aria-label="Project index"
+                  title="Project Index"
+                >
+                  ▦</button
+                ><button type="button" data-safari-page="/wiki/Bernardo_Maia">
+                  About me</button
+                ><button type="button" data-safari-page="/wiki/Projects">
+                  Projects</button
+                ><button type="button" data-safari-page="/wiki/Contact">
+                  Contact</button
+                ><button type="button" data-safari-page="/web">
+                  Web of 2009
+                </button>
+              </nav>
+              <div
+                id="wiki-language"
+                class="wiki-language-picker"
+                role="group"
+                aria-label="Wiki language"
+              >
+                <button
+                  type="button"
+                  data-language="pt"
+                  lang="pt-PT"
+                  aria-label="Português"
+                  title="Português"
+                  aria-pressed="false"
+                >
+                  <svg viewBox="0 0 30 20" aria-hidden="true" focusable="false">
+                    <path fill="#e32219" d="M0 0h30v20H0z" />
+                    <path fill="#00713a" d="M0 0h12v20H0z" />
+                    <circle
+                      cx="12"
+                      cy="10"
+                      r="5"
+                      fill="none"
+                      stroke="#ffd438"
+                      stroke-width="1.2"
+                    />
+                    <path
+                      fill="none"
+                      stroke="#ffd438"
+                      stroke-width=".65"
+                      d="M7 10h10M12 5c-4 3-4 7 0 10 4-3 4-7 0-10"
+                    />
+                    <path
+                      fill="#fff"
+                      stroke="#d21c20"
+                      stroke-width=".9"
+                      d="M9 6.6h6v4.8a3 3 0 0 1-6 0z"
+                    />
+                    <path
+                      fill="none"
+                      stroke="#17448a"
+                      stroke-width=".75"
+                      stroke-linecap="round"
+                      d="M12 8.3v.5m-1.4.9v.5m1.4-.5v.5m1.4-.5v.5m-1.4.9v.5"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  data-language="en"
+                  lang="en-US"
+                  aria-label="English"
+                  title="English"
+                  aria-pressed="true"
+                >
+                  <svg viewBox="0 0 30 20" aria-hidden="true" focusable="false">
+                    <path fill="#fff" d="M0 0h30v20H0z" />
+                    <path
+                      fill="none"
+                      stroke="#b52134"
+                      stroke-width="1.54"
+                      d="M0 .77h30m-30 3.08h30m-30 3.07h30m-30 3.08h30m-30 3.08h30m-30 3.07h30m-30 3.08h30"
+                    />
+                    <path fill="#263b76" d="M0 0h12v10.77H0z" />
+                    <defs>
+                      <pattern
+                        id="wiki-flag-stars"
+                        width="2"
+                        height="2.4"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <circle cx="1" cy=".65" r=".32" fill="#fff" />
+                        <circle cx="0" cy="1.85" r=".32" fill="#fff" />
+                        <circle cx="2" cy="1.85" r=".32" fill="#fff" />
+                      </pattern>
+                    </defs>
+                    <path fill="url(#wiki-flag-stars)" d="M0 0h12v10.77H0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="safari-tabs"
+            class="safari-tabs"
+            role="tablist"
+            aria-label="Safari tabs"
+            hidden
+          ></div>
+          <div
+            id="safari-page"
+            class="safari-page"
+            role="region"
+            aria-label="Web page"
+            tabindex="0"
+          ></div>
+          <section
+            id="safari-media-viewer"
+            class="safari-media-viewer"
+            role="dialog"
+            aria-label="Image viewer"
+            tabindex="-1"
+            hidden
+          >
+            <header class="media-viewer-toolbar">
+              <span id="media-viewer-count" aria-live="polite"></span>
+              <div>
+                <button
+                  type="button"
+                  id="media-viewer-zoom"
+                  aria-label="Show original size"
+                  aria-pressed="false"
+                >
+                  <svg
+                    class="media-control-icon icon-expand"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="square"
+                    stroke-linejoin="miter"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
+                    <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
+                    <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
+                    <path d="M3 7.8V3m0 0h4.8M3 3l6 6" /></svg
+                  ><svg
+                    class="media-control-icon icon-fit"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="square"
+                    stroke-linejoin="miter"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="m15 15 6 6m-6-6v4.8m0-4.8h4.8" />
+                    <path d="M9 19.8V15m0 0H4.2M9 15l-6 6" />
+                    <path d="M15 4.2V9m0 0h4.8M15 9l6-6" />
+                    <path d="M9 4.2V9m0 0H4.2M9 9 3 3" />
+                  </svg>
+                </button>
+                <a
+                  id="media-viewer-download"
+                  download
+                  aria-label="Download image"
+                  title="Download image"
+                  ><svg
+                    class="media-control-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="square"
+                    stroke-linejoin="miter"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M12 17V3" />
+                    <path d="m6 11 6 6 6-6" />
+                    <path d="M19 21H5" /></svg
+                ></a>
+                <button
+                  type="button"
+                  id="media-viewer-close"
+                  aria-label="Close image viewer"
+                >
+                  <svg
+                    class="media-control-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+            <div id="media-viewer-stage" class="media-viewer-stage">
+              <img id="media-viewer-image" alt="" />
+            </div>
+            <button
+              type="button"
+              id="media-viewer-previous"
+              class="media-viewer-arrow previous"
+              aria-label="Previous image"
+            >
+              <svg
+                class="media-control-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              id="media-viewer-next"
+              class="media-viewer-arrow next"
+              aria-label="Next image"
+            >
+              <svg
+                class="media-control-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+            <footer class="media-viewer-caption">
+              <strong id="media-viewer-title"></strong
+              ><span id="media-viewer-caption"></span>
+            </footer>
+          </section>
+        </section>
+        <section
+          class="window notes"
+          id="notes-window"
+          data-app="notes"
+          aria-label="Hire me Sticky"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights" hidden></div>
+            <button
+              type="button"
+              class="sticky-close"
+              aria-label="Close Sticky"
+              title="Close"
+            ></button>
+            <button
+              type="button"
+              class="sticky-corner"
+              aria-label="Move Sticky to corner"
+              title="Move to corner"
+            ></button>
+          </header>
+          <div class="notes-body">
+            <article class="note-paper" id="note-content">
+              <p>hi, im open to work</p>
+              <div class="sticky-hire">
+                <a id="sticky-hire-link" href="mailto:bernamaia12@gmail.com"
+                  >Hire me?</a
+                ><img
+                  src="assets/images/monke.webp"
+                  alt="A monkey looking thoughtful"
+                  width="120"
+                  height="80"
+                  draggable="false"
+                />
+              </div>
+            </article>
+          </div>
+        </section>
+        <section
+          class="window mail"
+          id="mail-window"
+          data-app="mail"
+          aria-label="Contact"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">New message</span>
+          </header>
+          <div class="mail-fields">
+            <p>
+              <span>To:</span>
+              <a href="mailto:bernamaia12@gmail.com">bernamaia12@gmail.com</a>
+            </p>
+            <p><span>Subject:</span> Projects and opportunities</p>
+          </div>
+          <form id="contact-form" class="mail-compose">
+            <p>A project, an idea, or just a hello.<br />Send me a message.</p>
+            <label
+              >Your name<input
+                name="name"
+                autocomplete="name"
+                placeholder="How should I call you?"
+                required
+                maxlength="120" /></label
+            ><label
+              >Message<textarea
+                name="message"
+                placeholder="Tell me what you have in mind…"
+                required
+                maxlength="5000"
+              ></textarea>
+            </label>
+            <footer>
+              <button type="button" id="copy-email" class="aqua-button">
+                Copy email</button
+              ><button type="submit" class="aqua-button primary">
+                Open in Mail ↗
+              </button>
+            </footer>
+            <small
+              >Opens your email app with a draft. Nothing is sent
+              automatically.</small
+            >
+          </form>
+        </section>
+        <section
+          class="window portrait"
+          id="portrait-window"
+          data-app="portrait"
+          aria-label="hi.webp"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">hi.webp - Preview</span>
+          </header>
+          <div class="portrait-content">
+            <img src="assets/images/hi.webp" alt="A paw reaching towards you" />
+          </div>
+          <footer class="window-status">hi.webp</footer>
+        </section>
+        <section
+          class="window ipod"
+          id="ipod-window"
+          data-app="ipod"
+          aria-label="iPod Classic"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">iPod Classic</span>
+          </header>
+          <div class="ipod-stage">
+            <img
+              data-genie-preview
+              src="assets/icons/ipod-genie-preview.svg"
+              alt=""
+              aria-hidden="true"
+            />
+            <iframe
+              id="portfolio-ipod"
+              title="iPod Classic music player"
+              allow="autoplay 'src' https://www.youtube.com; encrypted-media 'src' https://www.youtube.com"
+            ></iframe>
+          </div>
+        </section>
+        <section
+          class="window bin"
+          id="bin-window"
+          data-app="bin"
+          aria-label="Trash"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">Trash</span>
+          </header>
+          <div class="bin-content">
+            <img src="assets/icons/macos-10.6/trash-empty.png" alt="" />
+            <h2>Even the discarded ideas<br />have a place.</h2>
+            <p>Software projects and experiments.</p>
+            <button
+              type="button"
+              class="aqua-button"
+              data-safari-page="/wiki/Projects"
+            >
+              Explore the projects ↗
+            </button>
+          </div>
+        </section>
+        <section
+          class="window settings"
+          id="settings-window"
+          data-app="settings"
+          aria-label="System Preferences"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">Desktop &amp; Sound</span>
+          </header>
+          <div class="settings-content">
+            <h1>Make yourself at home.</h1>
+            <p>A familiar desktop, your way.</p>
+            <h2>Desktop background</h2>
+            <div class="wallpaper-options">
+              <button data-wallpaper="galaxy" aria-pressed="true">
+                <img
+                  src="assets/images/wallpapers/aurora.webp"
+                  alt="Purple galaxy wallpaper"
+                /><span>Aurora</span></button
+              ><button data-wallpaper="horizon" aria-pressed="false">
+                <img
+                  src="assets/images/wallpapers/horizon.webp"
+                  alt="Ocean horizon wallpaper"
+                /><span>Horizon</span>
+              </button>
+              <button data-wallpaper="earth-horizon" aria-pressed="false">
+                <img
+                  src="assets/images/wallpapers/earth-horizon.webp"
+                  alt=""
+                  loading="lazy"
+                /><span>Earth Horizon</span>
+              </button>
+              <button data-wallpaper="leopard-aurora" aria-pressed="false">
+                <img
+                  src="assets/images/wallpapers/leopard-aurora.webp"
+                  alt=""
+                  loading="lazy"
+                /><span>Leopard Aurora</span>
+              </button>
+              <button data-wallpaper="snow-leopard-prowl" aria-pressed="false">
+                <img
+                  src="assets/images/wallpapers/snow-leopard-prowl.webp"
+                  alt=""
+                  loading="lazy"
+                /><span>Snow Leopard Prowl</span>
+              </button>
+            </div>
+            <label class="setting-row"
+              >Startup sound
+              <input id="sound-setting" type="checkbox" role="switch" /></label
+            ><label class="setting-row"
+              >Reduce motion
+              <input id="motion-setting" type="checkbox" role="switch"
+            /></label>
+            <p class="settings-hint">
+              Preferences and your note are saved only on this device.
+            </p>
+            <button id="settings-reset" class="aqua-button">
+              Reset preferences
+            </button>
+          </div>
+        </section>
+        <section
+          class="window about"
+          id="about-window"
+          data-app="about"
+          aria-label="About this portfolio"
+          tabindex="-1"
+          hidden
+        >
+          <header class="titlebar">
+            <div class="traffic-lights"></div>
+            <span class="window-title">About This Portfolio</span>
+          </header>
+          <div class="about-content">
+            <img
+              src="assets/icons/logochrome.svg?v=4b20f40a0838"
+              width="60"
+              height="68"
+              alt=""
+            />
+            <h1>BMaiaOS</h1>
+            <p class="version">Bernardo Maia’s portfolio</p>
+            <p class="about-tagline">
+              Back to a time when we created things just for the fun of it.
+            </p>
+            <hr />
+            <p>
+              <a
+                href="https://github.com/gajonormal"
+                target="_blank"
+                rel="noopener noreferrer"
+                >GitHub · @gajonormal ↗</a
+              >
+            </p>
+            <p>
+              <a
+                href="https://github.com/gajonormal"
+                target="_blank"
+                rel="noopener noreferrer"
+                >github/portfolio ↗</a
+              >
+            </p>
+            <small>Independent portfolio. Not affiliated with Apple.</small>
+          </div>
+        </section>
+      </div>
+      <aside
+        id="admin-controls"
+        class="admin-controls"
+        aria-label="Desktop administration"
+        hidden
+      >
+        <strong>Desktop unlocked</strong>
+        <span>Drag desktop icons and Dock apps to arrange them.</span>
+        <div class="admin-actions">
+          <button id="admin-save" type="button">Save layout</button>
+          <button id="admin-reset" type="button">Reset layout</button>
+          <button id="admin-lock" type="button">Lock</button>
+        </div>
+        <output id="admin-status" role="status"></output>
+      </aside>
+      <nav id="dock" aria-label="Applications">
+        <div class="dock-shelf"></div>
+        <button data-open="finder" class="dock-item" aria-label="Finder">
+          <span class="dock-tooltip">Finder</span
+          ><img
+            src="assets/icons/macos-10.6/finder.png"
+            alt=""
+          /><i></i></button
+        ><button data-open="mail" class="dock-item" aria-label="Mail">
+          <span class="dock-tooltip">Mail</span
+          ><img src="assets/icons/macos-10.6/mail.png" alt="" /><i></i></button
+        ><button data-open="safari" class="dock-item" aria-label="Safari">
+          <span class="dock-tooltip">Safari</span
+          ><img src="assets/icons/safari.png" alt="" /><i></i></button
+        ><button data-open="notes" class="dock-item" aria-label="Notes">
+          <span class="dock-tooltip">Notes</span
+          ><img
+            src="assets/icons/macos-10.6/stickies.png"
+            alt=""
+          /><i></i></button
+        ><button
+          data-open="settings"
+          class="dock-item"
+          aria-label="System Preferences"
+        >
+          <span class="dock-tooltip">System Preferences</span
+          ><img src="assets/icons/macos-10.6/preferences.png" alt="" /><i></i>
+        </button>
+        <div
+          id="dock-windows"
+          role="group"
+          aria-label="Open windows"
+          hidden
+        ></div>
+        <button data-open="bin" class="dock-item" aria-label="Trash">
+          <span class="dock-tooltip">Trash</span
+          ><img src="assets/icons/macos-10.6/trash-empty.png" alt="" /><i></i>
+        </button>
+      </nav>
+    </main>
+    <section id="login-screen" aria-label="Welcome to BMaiaOS">
+      <div class="login-wrapper">
+        <header class="login-heading">
+          <img
+            class="login-logo"
+            src="assets/icons/logochrome.svg?v=4b20f40a0838"
+            alt=""
+          />
+          <h1>BMaiaOS</h1>
+          <p>Bernardo’s Portfolio</p>
+        </header>
+        <div class="login-account-panel">
+          <button
+            type="button"
+            id="login-button"
+            aria-label="Enter Bernardo Maia's portfolio"
+          >
+            <img src="assets/images/ape.webp" alt="" width="292" height="292" />
+            <span>Bernardo Maia</span>
+          </button>
+          <div class="login-password-panel">
+            <form
+              id="admin-form"
+              method="post"
+              aria-label="Unlock desktop"
+              inert
+            >
+              <div class="admin-password-row">
+                <label for="admin-password">Password:</label>
+                <input
+                  id="admin-password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  maxlength="256"
+                />
+              </div>
+              <p id="admin-login-status" role="status"></p>
+              <span id="admin-login-announcement" role="status"></span>
+            </form>
+          </div>
+        </div>
+        <div class="login-footer">
+          <div id="login-guest-actions">
+            <button id="login-sleep" class="login-action" type="button">
+              <img
+                src="assets/icons/login-buttons/sleep.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Sleep</span>
+            </button>
+            <button id="login-restart" class="login-action" type="button">
+              <img
+                src="assets/icons/login-buttons/restart.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Restart</span>
+            </button>
+            <button id="login-shutdown" class="login-action" type="button">
+              <img
+                src="assets/icons/login-buttons/power.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Shut Down</span>
+            </button>
+            <button
+              id="admin-unlock"
+              class="login-action"
+              type="button"
+              aria-controls="admin-form"
+              aria-expanded="false"
+              hidden
+            >
+              <img
+                src="assets/icons/login-buttons/admin.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Admin</span>
+            </button>
+          </div>
+          <div id="login-admin-actions" inert>
+            <button id="admin-cancel" class="login-action" type="button">
+              <img
+                src="assets/icons/login-buttons/back.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Back</span>
+            </button>
+            <button id="admin-help" class="login-action" type="button">
+              <img
+                src="assets/icons/login-buttons/forgot.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Forgot Password</span>
+            </button>
+            <button
+              id="admin-enter"
+              class="login-action"
+              type="submit"
+              form="admin-form"
+            >
+              <img
+                src="assets/icons/login-buttons/log-in.svg"
+                width="70"
+                height="71"
+                alt=""
+              />
+              <span>Log In</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <button id="login-power-return" type="button" inert>
+        <img src="assets/icons/logochrome.svg?v=4b20f40a0838" alt="" />
+        <span id="login-power-hint"></span>
+      </button>
+    </section>
+    <dialog id="spotlight" aria-label="Spotlight Search">
+      <div class="spotlight-input">
+        <label for="spotlight-input">Spotlight</label>
+        <div class="spotlight-field">
+          <input
+            id="spotlight-input"
+            type="search"
+            autocomplete="off"
+            aria-label="Search apps and projects"
+          /><span id="spotlight-caret" aria-hidden="true" hidden></span
+          ><button id="spotlight-clear" aria-label="Clear search" hidden>
+            ×
+          </button>
+        </div>
+      </div>
+      <div id="spotlight-results" hidden></div>
+      <footer hidden>
+        <button
+          id="spotlight-preferences"
+          class="spotlight-result"
+          type="button"
+        >
+          Spotlight Preferences…
+        </button>
+      </footer>
+    </dialog>
+    <dialog id="quicklook" aria-labelledby="preview-title">
+      <header>
+        <button
+          type="button"
+          id="preview-close"
+          aria-label="Close preview"
+          autofocus
+        >
+          ×
+        </button>
+        <span id="preview-title"></span>
+      </header>
+      <div class="preview-stage">
+        <img id="preview-image" alt="" />
+        <div class="preview-details">
+          <h2 id="preview-name"></h2>
+          <p id="preview-category"></p>
+          <p id="preview-description"></p>
+          <p id="preview-stack"></p>
+          <button type="button" id="preview-open-safari">
+            Open in Safari ↗
+          </button>
+        </div>
+      </div>
+      <footer>
+        <div class="preview-navigation">
+          <button type="button" id="preview-prev" aria-label="Previous project">
+            ←
+          </button>
+          <span id="preview-counter"></span>
+          <button type="button" id="preview-next" aria-label="Next project">
+            →
+          </button>
+        </div>
+        <button
+          type="button"
+          id="preview-expand"
+          aria-label="Expand preview"
+          aria-pressed="false"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M2 2h9L8 5l4 4-3 3-4-4-3 3Zm20 20h-9l3-3-4-4 3-3 4 4 3-3Z"
+            />
+          </svg>
+        </button>
+      </footer>
+    </dialog>
+    <div id="context-menu" class="menu" hidden>
+      <button data-open="finder">Open My work</button
+      ><button data-open="settings">Change Desktop Background…</button>
+      <hr />
+      <button id="context-arrange">Arrange Windows</button
+      ><button data-open="about">About This Portfolio</button>
+    </div>
+    <div id="dock-window-menu" class="menu" hidden>
+      <button id="open-dock-window" type="button">Open Window</button>
+      <button id="close-dock-window" type="button">Close Window</button>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <audio id="start-sound" src="music/startsound.mp3" preload="none"></audio>
+    <noscript>
+      <p class="noscript">
+        This portfolio requires JavaScript. Explore
+        <a href="https://github.com/gajonormal"
+          >Bernardo Maia’s projects on GitHub</a
+        >.
+      </p>
+    </noscript>
+  </body>
+</html>
