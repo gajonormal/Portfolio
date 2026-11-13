@@ -59,7 +59,7 @@ const server = http.createServer(async (req, res) => {
     const body = ['GET', 'HEAD'].includes(req.method)
       ? {}
       : { body: Readable.toWeb(req), duplex: 'half' };
-    const result = await admin(new Request(origin + decoded, {
+    const result = await admin(new Request(origin + decoded + parsed.search, {
       method: req.method,
       headers: req.headers,
       ...body

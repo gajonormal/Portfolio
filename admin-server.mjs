@@ -6,6 +6,9 @@ const passwordOptions = { N: 32768, r: 8, p: 3, maxmem: 64 * 1024 * 1024 };
 const desktopIds = ['finder', 'portrait', 'cv', 'notes', 'github'];
 const extraDesktopIds = ['linkedin', 'visitar', 'nethergate', 'abisso', 'oportunia', 'ipod'];
 const dockIds = ['finder', 'mail', 'safari', 'notes', 'settings'];
+const wallpapers = ['galaxy', 'horizon', 'earth-horizon', 'leopard-aurora', 'snow-leopard-prowl'];
+const maxPdfBytes = 3 * 1024 * 1024;
+const maxPdfEncoded = Math.ceil(maxPdfBytes / 3) * 4;
 const sessionSeconds = 30 * 60;
 const attemptsSeconds = 5 * 60;
 
@@ -15,8 +18,14 @@ export async function hashPassword(password, salt = randomBytes(16)) {
 }
 
 export function validLayout(layout) {
-  if (!layout || Object.keys(layout).length !== 2) return false;
-  const { desktop, dock } = layout;
+  if (
+    !layout ||
+    typeof layout !== 'object' ||
+    Array.isArray(layout) ||
+    Object.keys(layout).some(key => !['desktop', 'dock', 'wallpaper', 'hasCv', 'cv'].includes(key))
+  ) return false;
+  const { desktop, dock, hasCv = false, wallpaper = 'galaxy' } = layout;
+  if (typeof hasCv !== 'boolean' || !wallpapers.includes(wallpaper)) return false;
   if (
     !desktop ||
     Array.isArray(desktop) ||
@@ -38,13 +47,21 @@ export function validLayout(layout) {
   });
 }
 
+function validPdf(encoded) {
+  if (typeof encoded !== 'string' || encoded.length > maxPdfEncoded) return false;
+  const pdf = Buffer.from(encoded, 'base64');
+  return pdf.length <= maxPdfBytes &&
+    pdf.subarray(0, 5).toString() === '%PDF-' &&
+    pdf.toString('base64') === encoded;
+}
+
 const digest = value => createHash('sha256').update(value).digest('hex');
 const json = (body, status = 200, headers = {}) => Response.json(body, {
   status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }
 });
 const error = (message, status, headers) => json({ error: message }, status, headers);
 
-async function readJson(request) {
+async function readJson(request, maxBytes) {
   const reader = request.body?.getReader();
   if (!reader) throw new Error('Missing body');
   const decoder = new TextDecoder();
@@ -56,7 +73,7 @@ async function readJson(request) {
       return JSON.parse(text + decoder.decode());
     }
     bytes += value.byteLength;
-    if (bytes > 4096) {
+    if (bytes > maxBytes) {
       await reader.cancel();
       throw new Error('Body too large');
     }
@@ -78,6 +95,18 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
   return async request => {
     try {
       if (request.method === 'GET') {
+        if (new URL(request.url).searchParams.has('cv')) {
+          const pdf = enabled ? await store.getCv() : null;
+          if (!pdf) return error('No CV has been published.', 404);
+          return new Response(Buffer.from(pdf, 'base64'), {
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Content-Disposition': 'inline; filename="CV.pdf"',
+              'Cache-Control': 'no-store',
+              'X-Content-Type-Options': 'nosniff'
+            }
+          });
+        }
         return json({ enabled, layout: enabled ? await store.getLayout() : null });
       }
       if (!enabled) return error('Administration is unavailable.', 503);
@@ -102,7 +131,7 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
       if (request.method === 'PUT' && !session) return error('Unlock the desktop first.', 401);
       let body;
       try {
-        body = await readJson(request);
+        body = await readJson(request, request.method === 'PUT' ? maxPdfEncoded + 4096 : 4096);
       } catch {
         return error('Invalid request.', 400);
       }
@@ -125,9 +154,19 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
         return json({ layout }, 200, { 'Set-Cookie': cookie(newToken, sessionSeconds) });
       }
 
-      if (!validLayout(body)) return error('Invalid desktop layout.', 400);
-      if (!await store.saveLayout(session, body)) return error('Session expired. Unlock the desktop again.', 401);
-      return json({ layout: body });
+      if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return error('Invalid desktop settings.', 400);
+      }
+      const { cvPdf, ...layout } = body;
+      if (!validLayout(layout)) return error('Invalid desktop settings.', 400);
+      if (cvPdf !== undefined && !validPdf(cvPdf)) return error('Choose a valid PDF up to 3 MB.', 400);
+      const saved = await store.saveLayout(session, {
+        desktop: layout.desktop,
+        dock: layout.dock,
+        wallpaper: layout.wallpaper ?? 'galaxy'
+      }, cvPdf);
+      if (!saved) return error('Session expired. Unlock the desktop again.', 401);
+      return json({ layout: saved });
     } catch {
       return error('Desktop administration is temporarily unavailable.', 503);
     }
@@ -140,6 +179,7 @@ export function redisStore(url, token) {
   const prefix = 'maia-osx:v1:';
   const session = prefix + 'session';
   const layout = prefix + 'layout';
+  const cv = prefix + 'cv-pdf';
   const attempts = prefix + 'attempts';
   const run = async (...command) => {
     const response = await fetch(endpoint, {
@@ -162,6 +202,7 @@ export function redisStore(url, token) {
       const data = JSON.parse(await run('GET', layout));
       return validLayout(data) ? data : null;
     },
+    getCv: () => run('GET', cv),
     countAttempt: seconds => run(
       'EVAL',
       "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n",
@@ -185,27 +226,37 @@ export function redisStore(url, token) {
       session,
       value
     ),
-    saveLayout: (value, data) => run(
+    saveLayout: async (value, data, pdf) => JSON.parse(await run(
       'EVAL',
-      "if redis.call('GET',KEYS[1])~=ARGV[1] then return 0 end; redis.call('SET',KEYS[2],ARGV[2]); return 1",
-      2,
+      `if redis.call('GET',KEYS[1])~=ARGV[1] then return nil end
+       if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3]) end
+       local settings=cjson.decode(ARGV[2])
+       settings.hasCv=redis.call('EXISTS',KEYS[3])==1
+       local saved=cjson.encode(settings)
+       redis.call('SET',KEYS[2],saved)
+       return saved`,
+      3,
       session,
       layout,
+      cv,
       value,
-      JSON.stringify(data)
-    )
+      JSON.stringify(data),
+      pdf ?? ''
+    ))
   };
 }
 
 // A loopback-only preview, separate from the published layout.
 export function previewStore() {
   let layout = null;
+  let cv = null;
   let session;
   let expires = 0;
   let attempts = 0;
   let attemptsExpire = 0;
   return {
     getLayout: () => layout,
+    getCv: () => cv,
     countAttempt(seconds) {
       if (Date.now() >= attemptsExpire) {
         attempts = 0;
@@ -221,10 +272,11 @@ export function previewStore() {
     logout(value) {
       if (session === value) session = undefined;
     },
-    saveLayout(value, data) {
+    saveLayout(value, data, pdf) {
       if (session !== value || Date.now() >= expires) return false;
-      layout = data;
-      return true;
+      cv = pdf ?? cv;
+      layout = { ...data, hasCv: cv !== null };
+      return layout;
     }
   };
 }

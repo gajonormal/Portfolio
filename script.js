@@ -20,7 +20,7 @@ const apps = [
   { id: 'mail', name: 'Contact', detail: 'Bernardo Maia · LinkedIn and GitHub', icon: 'assets/icons/macos-10.6/mail.png', keys: 'contacto linkedin projetos oportunidades' },
   { id: 'safari', name: 'Safari', detail: 'My archive · Projects and GitHub', icon: 'assets/icons/safari.png', keys: 'browser web biografia programação github atividade contribuições' },
   { id: 'portrait', name: 'hi.webp', detail: 'Preview · Bernardo Maia', icon: 'assets/icons/macos-10.6/preview.png', keys: 'profile photo portrait monograma' },
-  { id: 'cv', name: 'CV.txt', detail: 'TextEdit · Bernardo Maia', icon: 'assets/icons/cv-txt.png', keys: 'cv resume curriculum vitae' },
+  { id: 'cv', name: 'CV.pdf', detail: 'Preview · Bernardo Maia', icon: 'assets/icons/cv-txt.png', keys: 'cv resume curriculum vitae' },
   { id: 'ipod', name: 'iPod Classic', detail: 'Music player', icon: 'assets/icons/ipod-classic.png', keys: 'music música songs canções playlist' },
   { id: 'settings', name: 'System Preferences', detail: 'Desktop & Sound', icon: 'assets/icons/macos-10.6/preferences.png', keys: 'wallpaper background sound motion' },
   { id: 'bin', name: 'Trash', detail: 'Trash is empty', icon: 'assets/icons/macos-10.6/trash-empty.png', keys: 'bin lixo caixote' },
@@ -47,7 +47,8 @@ const storage = {
     }
   }
 };
-let prefs = storage.get('preferences',{wallpaper:'galaxy',sound:false,motion:false});
+let prefs = storage.get('preferences',{sound:false,motion:false});
+let desktopWallpaper = 'galaxy';
 if(!prefs || typeof prefs !== 'object') prefs = {};
 let topZ = 20;
 let activeApp = null;
@@ -271,7 +272,7 @@ function setActive(id) {
     mail: 'Mail',
     safari: 'Safari',
     portrait: 'Preview',
-    cv: 'TextEdit',
+    cv: 'Preview',
     ipod: 'iPod Classic',
     bin: 'Finder',
     settings: 'System Preferences',
@@ -681,18 +682,26 @@ function applySoundPreferences(){
   soundToggle.toggleAttribute('data-muted',!prefs.sound);
   $('#sound-setting').checked=!!prefs.sound;
 }
-function applyPreferences(){
+function applyWallpaper(){
   const wallpaperOptions=$$('[data-wallpaper]');
-  prefs.wallpaper=({classic:'horizon','snowy-hills':'snow-leopard-prowl'})[prefs.wallpaper]||prefs.wallpaper;
-  const selectedWallpaper=wallpaperOptions.find(button=>button.dataset.wallpaper===prefs.wallpaper)||wallpaperOptions[0];
-  prefs.wallpaper=selectedWallpaper.dataset.wallpaper;
+  const personalWallpaper=({classic:'horizon','snowy-hills':'snow-leopard-prowl'})[prefs.wallpaper]||prefs.wallpaper;
+  const wallpaper=document.body.classList.contains('desktop-admin')?desktopWallpaper:personalWallpaper;
+  const selectedWallpaper=wallpaperOptions.find(button=>button.dataset.wallpaper===wallpaper)
+    ||wallpaperOptions.find(button=>button.dataset.wallpaper===desktopWallpaper)||wallpaperOptions[0];
   $('#desktop').style.backgroundImage=`url('${$('img',selectedWallpaper).getAttribute('src')}')`;
-  document.body.classList.toggle('reduce-motion',!!prefs.motion);$('#motion-setting').checked=!!prefs.motion;
   wallpaperOptions.forEach(button=>button.setAttribute('aria-pressed',button===selectedWallpaper));
+}
+function applyPreferences(){
+  applyWallpaper();
+  document.body.classList.toggle('reduce-motion',!!prefs.motion);$('#motion-setting').checked=!!prefs.motion;
   applySoundPreferences();
 }
 function savePreferences(){storage.set('preferences',prefs);applyPreferences();}
-$$('[data-wallpaper]').forEach(b=>b.addEventListener('click',()=>{prefs.wallpaper=b.dataset.wallpaper;savePreferences();}));
+$$('[data-wallpaper]').forEach(b=>b.addEventListener('click',()=>{
+  if(document.body.classList.contains('desktop-admin'))return;
+  prefs.wallpaper=b.dataset.wallpaper;
+  savePreferences();
+}));
 $('#sound-setting').addEventListener('change',e=>{prefs.sound=e.target.checked;savePreferences();});$('#motion-setting').addEventListener('change',e=>{prefs.motion=e.target.checked;savePreferences();});
 soundToggle.addEventListener('click',event=>{
   event.stopPropagation();
@@ -712,7 +721,7 @@ soundMenu.addEventListener('keydown',event=>{
   closeMenus();
   soundToggle.focus({preventScroll:true});
 });
-$('#settings-reset').addEventListener('click',()=>{prefs={wallpaper:'galaxy',sound:false,motion:false};savePreferences();toast('Desktop preferences reset.');});
+$('#settings-reset').addEventListener('click',()=>{prefs={sound:false,motion:false};savePreferences();toast('Desktop preferences reset.');});
 function renderSpotlight(){
   const q=normalizeSearch($('#spotlight-input').value);
   const results=$('#spotlight-results');results.replaceChildren();results.hidden=!q;

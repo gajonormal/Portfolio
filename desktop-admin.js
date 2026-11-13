@@ -9,7 +9,20 @@
   const profile = $('#login-button');
   const loginPanel = unlock.closest('.login-wrapper');
   const controls = $('#admin-controls');
+  const tools = $('#admin-tools');
+  const moveHandle = $('#admin-move');
+  const toggle = $('#admin-toggle');
   const status = $('#admin-status');
+  const cvFile = $('#cv-file');
+  const cvStatus = $('#cv-status');
+  const cvPreview = $('#cv-preview');
+  const cvEndpoint = new URL(api);
+  cvEndpoint.searchParams.set('cv', '1');
+  const wallpaperSelect = $('#admin-wallpaper');
+  const wallpaperOptions = $$('[data-wallpaper]');
+  for (const button of wallpaperOptions) {
+    wallpaperSelect.add(new Option($('span', button).textContent, button.dataset.wallpaper));
+  }
   const lock = $('#lock');
   const loginStatus = $('#admin-login-status');
   const loginAnnouncement = $('#admin-login-announcement');
@@ -17,7 +30,9 @@
   const apps = new Map($$('#dock > [data-open]:not([data-open="bin"])').map(button => [button.dataset.open, button]));
   const defaults = {
     desktop: Object.fromEntries([...files.keys()].map(id => [id, null])),
-    dock: [...apps.keys()]
+    dock: [...apps.keys()],
+    hasCv: false,
+    wallpaper: 'galaxy'
   };
   let published = defaults;
   let layout = structuredClone(defaults);
@@ -25,6 +40,8 @@
   let busy = false;
   let signingIn = false;
   let loginShake;
+  let pendingCv;
+  let readingCv = false;
 
   async function request(method = 'GET', body) {
     const response = await fetch(api, {
@@ -73,7 +90,9 @@
   function completeLayout(next) {
     return {
       desktop: { ...defaults.desktop, ...next.desktop },
-      dock: next.dock.filter(id => apps.has(id))
+      dock: next.dock.filter(id => apps.has(id)),
+      hasCv: next.hasCv ?? defaults.hasCv,
+      wallpaper: next.wallpaper ?? defaults.wallpaper
     };
   }
 
@@ -81,12 +100,124 @@
     layout = completeLayout(next);
     for (const id of layout.dock) dock.insertBefore(apps.get(id), $('#dock-windows'));
     applyPositions();
+    renderCv();
+    wallpaperSelect.value = desktopWallpaper = layout.wallpaper;
+    applyWallpaper();
   }
 
-  const dirty = () => JSON.stringify(layout) !== JSON.stringify(published);
+  const dirty = () => Boolean(pendingCv) || JSON.stringify(layout) !== JSON.stringify(published);
   const markDraft = () => {
-    if (editing) status.textContent = 'Unsaved changes';
+    status.textContent = dirty() ? 'Unsaved changes' : '';
   };
+
+  function renderCv() {
+    const source = pendingCv?.url || (layout.hasCv ? cvEndpoint.href : '');
+    $('#cv-empty').hidden = Boolean(source);
+    $('#cv-links').hidden = cvPreview.hidden = !source;
+    if (source && cvPreview.getAttribute('src') !== source) {
+      cvPreview.src = $('#cv-open').href = $('#cv-download').href = source;
+    } else if (!source) {
+      cvPreview.removeAttribute('src');
+    }
+  }
+  function clearPendingCv() {
+    if (pendingCv) URL.revokeObjectURL(pendingCv.url);
+    pendingCv = undefined;
+    cvFile.value = '';
+    cvStatus.textContent = '';
+  }
+  $('#admin-edit-cv').addEventListener('click', () => {
+    openApp('cv');
+    cvFile.focus();
+  });
+  cvFile.addEventListener('change', async () => {
+    const file = cvFile.files[0];
+    if (!file || !editing || busy) return;
+    readingCv = true;
+    cvFile.disabled = true;
+    $('#admin-save').disabled = true;
+    try {
+      if (file.size > 3 * 1024 * 1024 || await file.slice(0, 5).text() !== '%PDF-') {
+        cvFile.value = '';
+        cvStatus.textContent = 'Choose a valid PDF up to 3 MB.';
+        return;
+      }
+      clearPendingCv();
+      pendingCv = { file, url: URL.createObjectURL(file) };
+      cvStatus.textContent = `${file.name} is ready to publish with Save changes.`;
+      renderCv();
+      markDraft();
+    } catch {
+      cvStatus.textContent = 'Could not read the PDF. Choose the file again.';
+    } finally {
+      readingCv = false;
+      cvFile.disabled = false;
+      $('#admin-save').disabled = false;
+    }
+  });
+  function encodePdf(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',', 2)[1]);
+      reader.onerror = () => reject(new Error('Could not read the PDF. Choose the file again.'));
+      reader.readAsDataURL(file);
+    });
+  }
+  function changeWallpaper(wallpaper) {
+    wallpaperSelect.value = desktopWallpaper = layout.wallpaper = wallpaper;
+    applyWallpaper();
+    markDraft();
+  }
+  wallpaperSelect.addEventListener('change', () => changeWallpaper(wallpaperSelect.value));
+  for (const button of wallpaperOptions) {
+    button.addEventListener('click', () => {
+      if (editing) changeWallpaper(button.dataset.wallpaper);
+    });
+  }
+
+  function movePanel(left, top) {
+    const area = desktop.getBoundingClientRect();
+    const menuBottom = $('.menubar').getBoundingClientRect().bottom - area.top + 4;
+    const bottom = dock.getBoundingClientRect().top - area.top - controls.offsetHeight - 4;
+    controls.style.left = `${Math.max(4, Math.min(left, area.width - controls.offsetWidth - 4))}px`;
+    controls.style.top = `${Math.max(menuBottom, Math.min(top, bottom))}px`;
+  }
+  function fitPanel() {
+    if (editing) movePanel(controls.offsetLeft, controls.offsetTop);
+  }
+  toggle.addEventListener('click', () => {
+    tools.hidden = !tools.hidden;
+    toggle.textContent = tools.hidden ? '+' : '−';
+    toggle.setAttribute('aria-expanded', String(!tools.hidden));
+    toggle.title = tools.hidden ? 'Restore admin panel' : 'Minimize admin panel';
+    toggle.setAttribute('aria-label', toggle.title);
+    fitPanel();
+  });
+  moveHandle.addEventListener('keydown', event => {
+    const offset = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[event.key];
+    if (!offset) return;
+    event.preventDefault();
+    event.stopPropagation();
+    movePanel(controls.offsetLeft + offset[0], controls.offsetTop + offset[1]);
+  });
+  let panelDrag;
+  moveHandle.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    moveHandle.setPointerCapture(event.pointerId);
+    panelDrag = {
+      pointer: event.pointerId,
+      x: event.clientX - controls.offsetLeft,
+      y: event.clientY - controls.offsetTop
+    };
+  });
+  moveHandle.addEventListener('pointermove', event => {
+    if (panelDrag?.pointer !== event.pointerId) return;
+    movePanel(event.clientX - panelDrag.x, event.clientY - panelDrag.y);
+  });
+  moveHandle.addEventListener('lostpointercapture', () => { panelDrag = undefined; });
+  new ResizeObserver(fitPanel).observe(controls);
+  window.addEventListener('resize', fitPanel);
+
   const fraction = (offset, length) => length ? Math.min(1, Math.max(0, offset / length)) : 0;
   desktop.addEventListener('desktop-icon-moved', event => {
     if (!editing) return;
@@ -143,14 +274,15 @@
     try {
       const result = await request('POST', { password: credential });
       published = completeLayout(result.layout || defaults);
-      applyLayout(published);
       editing = true;
       document.body.classList.add('desktop-admin');
+      applyLayout(published);
+      $('#cv-admin').hidden = false;
       controls.hidden = false;
       status.textContent = '';
       showPrompt(false, false);
       profile.click();
-      $('#admin-save').focus();
+      (tools.hidden ? toggle : $('#admin-save')).focus();
     } catch (error) {
       loginAnnouncement.textContent = error.message;
       password.focus({ preventScroll: true });
@@ -171,32 +303,40 @@
   $('#admin-save').addEventListener('click', async () => {
     if (busy) return;
     busy = true;
+    cvFile.disabled = true;
     status.textContent = 'Saving…';
     const snapshot = structuredClone(layout);
     try {
+      if (pendingCv) snapshot.cvPdf = await encodePdf(pendingCv.file);
       const result = await request('PUT', snapshot);
       published = completeLayout(result.layout);
+      layout.hasCv = published.hasCv;
+      clearPendingCv();
+      renderCv();
       status.textContent = dirty()
-        ? 'Layout published. New changes are unsaved.'
-        : 'Layout published.';
+        ? 'Changes published. New changes are unsaved.'
+        : 'Changes published.';
     } catch (error) {
       status.textContent = error.message;
     } finally {
+      cvFile.disabled = false;
       busy = false;
     }
   });
 
   $('#admin-reset').addEventListener('click', () => {
-    applyLayout(defaults);
+    applyLayout({ ...layout, desktop: defaults.desktop, dock: defaults.dock });
     markDraft();
   });
   async function exitEditor() {
-    if (busy || (dirty() && !confirm('Discard unpublished changes and lock the desktop?'))) return;
+    if (busy || readingCv || (dirty() && !confirm('Discard unpublished changes and lock the desktop?'))) return;
     busy = true;
     try {
       await request('DELETE', {});
       editing = false;
       document.body.classList.remove('desktop-admin');
+      $('#cv-admin').hidden = true;
+      clearPendingCv();
       controls.hidden = true;
       applyLayout(published);
       lock.click();
@@ -295,8 +435,10 @@
 
   request().then(result => {
     if (!result.enabled) return;
-    published = completeLayout(result.layout || defaults);
-    if (!editing && result.layout) applyLayout(published);
+    if (!editing && !signingIn && result.layout) {
+      published = completeLayout(result.layout);
+      applyLayout(published);
+    }
     unlock.hidden = false;
   }).catch(() => {});
 })();
