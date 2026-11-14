@@ -1111,8 +1111,8 @@
           <strong
             id="admin-move"
             tabindex="0"
-            aria-label="Desktop unlocked. Use the arrow keys to move this panel."
-          >Desktop unlocked</strong>
+            aria-label="Desktop editor. Use the arrow keys to move this panel."
+          >Desktop editor</strong>
           <button
             id="admin-toggle"
             type="button"
@@ -1123,15 +1123,17 @@
           >−</button>
         </header>
         <div id="admin-tools">
-          <div class="admin-actions">
-            <button id="admin-save" type="button">Save changes</button>
+          <div class="admin-settings">
+            <span>Layout</span>
             <button id="admin-reset" type="button">Reset layout</button>
-            <button id="admin-lock" type="button">Lock</button>
-          </div>
-          <div class="admin-actions">
-            <button id="admin-edit-cv" type="button">Upload CV</button>
             <label for="admin-wallpaper">Wallpaper</label>
             <select id="admin-wallpaper"></select>
+            <span>CV</span>
+            <button id="admin-edit-cv" type="button">Upload CV</button>
+          </div>
+          <div class="admin-actions">
+            <button id="admin-lock" type="button">Lock desktop</button>
+            <button id="admin-save" type="button">Save changes</button>
           </div>
         </div>
         <output id="admin-status" role="status"></output>
