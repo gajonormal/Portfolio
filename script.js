@@ -93,6 +93,35 @@ function fitOpeningWindow(window) {
   const bottom = $('#dock').getBoundingClientRect().top - 8;
   if (top + height > bottom) window.style.top = `${Math.max(35, bottom - height)}px`;
 }
+
+function openingPositionBounds(window) {
+  return {
+    width: Math.max(0, innerWidth - window.offsetWidth),
+    height: Math.max(0, innerHeight - 155)
+  };
+}
+
+const windowPositionOffset = window => window.classList.contains('notes')
+  ? Number(window.style.getPropertyValue('--sticky-index')) * 18 : 0;
+
+function applyOpeningPosition(window, reset = false) {
+  const id = windowSettingsId(window);
+  const position = windowSettings[id]?.position;
+  if (innerWidth <= 640 || window.classList.contains('maximized')) return;
+  if (!position) {
+    if (!reset && !window.hasAttribute('data-opening-position')) return;
+    window.style.left = window.dataset.originalLeft;
+    window.style.top = window.dataset.originalTop;
+    window.removeAttribute('data-opening-position');
+    return;
+  }
+  const area = openingPositionBounds(window);
+  const offset = windowPositionOffset(window);
+  window.style.left = `${Math.min(area.width, position[0] * area.width + offset)}px`;
+  window.style.top = `${30 + Math.min(area.height, position[1] * area.height + offset)}px`;
+  window.classList.remove('sticky-in-corner');
+  window.setAttribute('data-opening-position', '');
+}
 const pinnedDockApps = new Set($$('#dock > [data-open]').map(button => button.dataset.open));
 const dockWindowEntries = new Map();
 const dockSlotMotions = new WeakMap();
@@ -369,7 +398,8 @@ function openApp(id, slow = false) {
   if (!window) return;
   const wasMinimized = window.dataset.minimized === 'true';
   const wasRunning = window.dataset.running === 'true';
-  if (!wasRunning && (windowSettings[windowSettingsId(window)]?.size || window.hasAttribute('data-opening-size'))) {
+  const settings = windowSettings[windowSettingsId(window)];
+  if (!wasRunning && (settings?.size || settings?.position || window.hasAttribute('data-opening-size'))) {
     window.classList.remove('maximized');
     applyOpeningSize(window);
   }
@@ -377,7 +407,10 @@ function openApp(id, slow = false) {
   window.dataset.minimized = 'false';
   window.hidden = false;
   window.dataset.running = 'true';
-  if (!wasRunning) fitOpeningWindow(window);
+  if (!wasRunning) {
+    applyOpeningPosition(window);
+    if (!settings?.position) fitOpeningWindow(window);
+  }
   desktopHidden = desktopHidden.filter(app => app !== id);
   focusWindow(id, true);
   refreshIndicators();
@@ -514,6 +547,8 @@ function arrangeWindows(){windows.forEach((w,i)=>{w.classList.remove('maximized'
 function showDesktop(){for(const animation of [...windowAnimations.values()])animation.finish();const visible=windows.filter(w=>!w.hidden);if(visible.length){desktopHidden=visible.map(w=>w.dataset.app);visible.forEach(w=>w.hidden=true);setActive(null);}else{const saved=[...desktopHidden];desktopHidden=[];saved.forEach(openApp);}closeMenus();}
 function setupWindow(w) {
   const id=w.dataset.app;
+  w.dataset.originalLeft = w.style.left;
+  w.dataset.originalTop = w.style.top;
   const sticky=w.classList.contains('notes');
   const controls=[['Close','×',()=>hideWindow(id,true)],['Minimize','−',e=>hideWindow(id,false,e.shiftKey)],['Maximize','+',()=>maximize(id)]];
   if (sticky) {
@@ -568,7 +603,8 @@ function setupWindow(w) {
     const rect=w.getBoundingClientRect(),sx=e.clientX,sy=e.clientY,pointerId=e.pointerId;
     // Keep the window's layout fixed while dragging so filtered SVGs can be
     // composited with the window instead of forcing a new layout on each event.
-    const maxLeft=Math.max(0,innerWidth-rect.width),maxTop=Math.max(30,innerHeight-125);
+    const limits = openingPositionBounds(w);
+    const maxLeft=limits.width,maxTop=30+limits.height;
     let frame=0,left=rect.left,top=rect.top;
     const paint=()=>{
       frame=0;
@@ -587,6 +623,9 @@ function setupWindow(w) {
       w.style.top=`${top}px`;
       w.style.removeProperty('transform');
       w.classList.remove('window-dragging');
+      if (left !== rect.left || top !== rect.top) {
+        w.dispatchEvent(new Event('window-position-changed', { bubbles: true }));
+      }
       bar.removeEventListener('pointermove',move);
       bar.removeEventListener('pointerup',stop);
       bar.removeEventListener('pointercancel',stop);

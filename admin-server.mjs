@@ -56,9 +56,12 @@ function validWindows(settings) {
   return settings !== null && typeof settings === 'object' && !Array.isArray(settings) &&
     Object.entries(settings).every(([id, item]) => {
       if (!windowIds.includes(id) || !item || typeof item.startup !== 'boolean' ||
-          Object.keys(item).some(key => !['startup', 'size', 'order'].includes(key))) return false;
+          Object.keys(item).some(key => !['startup', 'size', 'order', 'position'].includes(key))) return false;
       if (item.order !== undefined && (!item.startup || !Number.isInteger(item.order) ||
           item.order < 0 || item.order >= windowIds.length)) return false;
+      const { position } = item;
+      if (position !== undefined && (!Array.isArray(position) || position.length !== 2 ||
+          !position.every(value => Number.isFinite(value) && value >= 0 && value <= 1))) return false;
       const { size } = item;
       return size === undefined || (
         Array.isArray(size) && size.length === 2 &&

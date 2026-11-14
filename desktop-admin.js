@@ -137,6 +137,9 @@
   const heightField = $('#window-settings-height');
   const captureSize = $('#window-settings-capture');
   const previewSize = $('#window-settings-preview');
+  const capturePosition = $('#window-position-capture');
+  const resetPosition = $('#window-position-reset');
+  const positionStatus = $('#window-position-status');
   const windowLabels = {
     safari: 'Safari', finder: 'Finder', mail: 'Mail', notes: 'Stickies',
     cv: 'CV', portrait: 'Preview', ipod: 'iPod Classic', settings: 'System Preferences',
@@ -148,10 +151,11 @@
   function normalizeWindows(settings) {
     return Object.fromEntries(windowIds.flatMap(id => {
       const item = settings[id];
-      if (!item?.startup && !item?.size) return [];
+      if (!item?.startup && !item?.size && !item?.position) return [];
       return [[id, {
         startup: item.startup,
         ...(item.size && { size: [...item.size] }),
+        ...(item.position && { position: [...item.position] }),
         ...(item.startup && item.order !== undefined && { order: item.order })
       }]];
     }));
@@ -160,6 +164,18 @@
   const selectedWindows = () => windows.filter(window => windowSettingsId(window) === windowSelect.value);
   const currentWindow = () => selectedWindows().sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))
     .find(window => !window.hidden && !window.classList.contains('maximized'));
+  function refreshPositionSettings() {
+    const position = layout.windows[windowSelect.value]?.position;
+    capturePosition.disabled = innerWidth <= 640 || !currentWindow();
+    resetPosition.disabled = !position;
+    if (innerWidth <= 640) {
+      positionStatus.textContent = 'Use a wider screen to set the opening position.';
+    } else if (capturePosition.disabled) {
+      positionStatus.textContent = 'Preview the window first, then move it.';
+    } else {
+      positionStatus.textContent = position ? 'Custom position set.' : 'Drag the window to set its opening position.';
+    }
+  }
 
   function renderStartupOrder(focusId, direction) {
     const ids = startupWindowIds(layout.windows);
@@ -194,7 +210,7 @@
   }
 
   function setWindowSetting(id, settings) {
-    if (settings.startup || settings.size) layout.windows[id] = settings;
+    if (settings.startup || settings.size || settings.position) layout.windows[id] = settings;
     else delete layout.windows[id];
     layout.windows = normalizeWindows(layout.windows);
     windowSettings = layout.windows;
@@ -205,9 +221,9 @@
     if (!sizeForm.checkValidity()) return false;
     const id = windowSelect.value;
     setWindowSetting(id, {
-      order: layout.windows[id]?.order,
+      ...layout.windows[id],
       startup: startup.checked,
-      ...(!originalSize.checked && { size: [widthField.valueAsNumber, heightField.valueAsNumber] })
+      size: originalSize.checked ? undefined : [widthField.valueAsNumber, heightField.valueAsNumber]
     });
     return true;
   }
@@ -227,6 +243,7 @@
     heightField.value = settings?.size?.[1] ?? '';
     captureSize.disabled = !currentWindow();
     previewSize.disabled = !selectedWindows().length;
+    refreshPositionSettings();
   }
 
   $('#admin-edit-windows').addEventListener('click', () => {
@@ -258,6 +275,42 @@
     useWindowSize(window);
     updateWindowSetting();
   });
+  function recordWindowPosition(window) {
+    const id = windowSettingsId(window);
+    const left = window.offsetLeft;
+    const top = window.offsetTop;
+    const style = window.style.cssText;
+    const hasCustomSize = window.hasAttribute('data-opening-size');
+    // Measure the space the window will have at its opening size.
+    applyOpeningSize(window);
+    const area = openingPositionBounds(window);
+    window.style.cssText = style;
+    window.toggleAttribute('data-opening-size', hasCustomSize);
+    const fraction = (distance, range) => range ? Math.min(1, Math.max(0, distance / range)) : 0;
+    const offset = windowPositionOffset(window);
+    setWindowSetting(id, {
+      startup: false,
+      ...layout.windows[id],
+      position: [fraction(left - offset, area.width), fraction(top - 30 - offset, area.height)]
+    });
+  }
+  desktop.addEventListener('window-position-changed', event => {
+    if (editing) recordWindowPosition(event.target);
+  });
+  capturePosition.addEventListener('click', () => {
+    const window = currentWindow();
+    if (!window || innerWidth <= 640) return;
+    recordWindowPosition(window);
+    refreshPositionSettings();
+  });
+  resetPosition.addEventListener('click', () => {
+    const id = windowSelect.value;
+    setWindowSetting(id, { ...layout.windows[id], position: undefined });
+    refreshPositionSettings();
+  });
+  window.addEventListener('resize', () => {
+    if (windowDialog.open) refreshPositionSettings();
+  });
   $('#window-settings-done').addEventListener('click', () => {
     if (sizeForm.reportValidity() && updateWindowSetting()) windowDialog.close();
   });
@@ -271,7 +324,10 @@
       applyOpeningSize(window);
     }
     openApp(id);
-    selectedWindows().forEach(fitOpeningWindow);
+    selectedWindows().forEach(window => {
+      applyOpeningPosition(window, true);
+      if (!windowSettings[id]?.position) fitOpeningWindow(window);
+    });
   });
 
   function renderCv() {

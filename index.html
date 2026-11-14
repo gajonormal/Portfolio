@@ -1298,7 +1298,7 @@
     </section>
     <dialog id="window-settings" class="desktop-editor-dialog" aria-labelledby="window-settings-title">
       <header>
-        <h2 id="window-settings-title">Startup &amp; window sizes</h2>
+        <h2 id="window-settings-title">Startup &amp; window layout</h2>
         <button type="button" id="window-settings-done">Done</button>
       </header>
       <div class="desktop-editor-body">
@@ -1317,6 +1317,14 @@
               <label>Height (px) <input id="window-settings-height" type="number" min="150" max="1600" step="1" required></label>
             </div>
           </div>
+          <fieldset class="startup-order">
+            <legend>Opening position</legend>
+            <p id="window-position-status"></p>
+            <div class="editor-fields-row">
+              <button type="button" id="window-position-capture">Use current position</button>
+              <button type="button" id="window-position-reset">Use original position</button>
+            </div>
+          </fieldset>
           <div class="editor-fields-row">
             <button type="button" id="window-settings-capture">Use current size</button>
             <button type="submit" id="window-settings-preview">Preview window</button>
