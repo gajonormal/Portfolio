@@ -33,6 +33,7 @@
     <script src="content/wiki-strings.pt.js" defer></script>
     <script src="content/wiki-projects.pt.js" defer></script>
     <script src="script.js" defer></script>
+    <script src="stickies.js" defer></script>
     <script src="safari.js" defer></script>
     <script src="desktop-admin.js" defer></script>
   </head>
@@ -834,14 +835,9 @@
             </footer>
           </section>
         </section>
-        <section
-          class="window notes"
-          id="notes-window"
-          data-app="notes"
-          aria-label="Hire me Sticky"
-          tabindex="-1"
-          hidden
-        >
+        <div id="stickies-windows"></div>
+        <template id="sticky-template">
+        <section class="window notes" tabindex="-1" hidden>
           <header class="titlebar">
             <div class="traffic-lights" hidden></div>
             <button
@@ -850,6 +846,7 @@
               aria-label="Close Sticky"
               title="Close"
             ></button>
+            <span class="window-title"></span>
             <button
               type="button"
               class="sticky-corner"
@@ -858,22 +855,10 @@
             ></button>
           </header>
           <div class="notes-body">
-            <article class="note-paper" id="note-content">
-              <p>hi, im open to work</p>
-              <div class="sticky-hire">
-                <a id="sticky-hire-link" href="mailto:bernamaia12@gmail.com"
-                  >Hire me?</a
-                ><img
-                  src="assets/images/monke.webp"
-                  alt="A monkey looking thoughtful"
-                  width="120"
-                  height="80"
-                  draggable="false"
-                />
-              </div>
-            </article>
+            <article class="note-paper"></article>
           </div>
         </section>
+        </template>
         <section
           class="window mail"
           id="mail-window"
@@ -1130,6 +1115,8 @@
             <select id="admin-wallpaper"></select>
             <span>CV</span>
             <button id="admin-edit-cv" type="button">Upload CV</button>
+            <span>Stickies</span>
+            <button id="admin-edit-stickies" type="button">Edit notes</button>
           </div>
           <div class="admin-actions">
             <button id="admin-lock" type="button">Lock desktop</button>
@@ -1307,6 +1294,46 @@
         <span id="login-power-hint"></span>
       </button>
     </section>
+    <dialog id="stickies-editor" aria-labelledby="stickies-editor-title">
+      <header>
+        <h2 id="stickies-editor-title">Edit Stickies</h2>
+        <button type="button" id="stickies-done" autofocus>Done</button>
+      </header>
+      <div class="stickies-editor-body">
+        <label class="sticky-checkbox"><input type="checkbox" id="stickies-shortcut"> Show shortcut on desktop</label>
+        <div class="sticky-picker">
+          <label>Note <select id="stickies-picker"></select></label>
+          <button type="button" id="stickies-add">New note</button>
+        </div>
+        <div id="sticky-fields" hidden>
+          <div class="sticky-fields-row">
+            <label>Title <input id="sticky-title" maxlength="64"></label>
+            <label>Colour
+              <select id="sticky-colour">
+                <option value="yellow">Yellow</option>
+                <option value="blue">Blue</option>
+                <option value="purple">Purple</option>
+                <option value="green">Green</option>
+                <option value="pink">Pink</option>
+                <option value="orange">Orange</option>
+              </select>
+            </label>
+          </div>
+          <label>Text <textarea id="sticky-text" rows="5" maxlength="2000"></textarea></label>
+          <div class="sticky-fields-row">
+            <label>Link label <input id="sticky-link-label" maxlength="64"></label>
+            <label>Link URL <input id="sticky-link" maxlength="256" placeholder="https:// or mailto:"></label>
+          </div>
+          <div class="sticky-images" id="sticky-images"></div>
+          <label>Add image <input type="file" id="sticky-upload" accept="image/png,image/jpeg,image/webp,image/gif,image/avif"></label>
+          <div class="sticky-fields-actions">
+            <label class="sticky-checkbox"><input type="checkbox" id="sticky-visible"> Show in Stickies</label>
+            <button type="button" id="stickies-delete">Delete note</button>
+          </div>
+        </div>
+      </div>
+      <p id="stickies-status" role="status"></p>
+    </dialog>
     <dialog id="spotlight" aria-label="Spotlight Search">
       <div class="spotlight-input">
         <label for="spotlight-input">Spotlight</label>

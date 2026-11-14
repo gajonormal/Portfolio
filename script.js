@@ -16,7 +16,7 @@ const projectSearchText = project => normalizeSearch([
 ].join(' '));
 const apps = [
   { id: 'finder', name: 'My work', detail: 'Finder · Software projects', icon: 'assets/icons/macos-10.6/finder.png', keys: 'projects projetos programação software portfolio' },
-  { id: 'notes', name: 'Hire me', detail: 'Stickies · Open to work', icon: 'assets/icons/macos-10.6/stickies.png', keys: 'skills linguagens ferramentas tecnologias biografia bernardo maia' },
+  { id: 'notes', name: 'Stickies', detail: 'Desktop notes', icon: 'assets/icons/macos-10.6/stickies.png', keys: 'notes notas' },
   { id: 'mail', name: 'Contact', detail: 'Bernardo Maia · LinkedIn and GitHub', icon: 'assets/icons/macos-10.6/mail.png', keys: 'contacto linkedin projetos oportunidades' },
   { id: 'safari', name: 'Safari', detail: 'My archive · Projects and GitHub', icon: 'assets/icons/safari.png', keys: 'browser web biografia programação github atividade contribuições' },
   { id: 'portrait', name: 'hi.webp', detail: 'Preview · Bernardo Maia', icon: 'assets/icons/macos-10.6/preview.png', keys: 'profile photo portrait monograma' },
@@ -69,7 +69,7 @@ const dockWindowEntries = new Map();
 const dockSlotMotions = new WeakMap();
 let dockMenuAnchor = null;
 function dockTarget(id) {
-  return dockWindowEntries.get(id) || $(`#dock > [data-open="${id}"]`) || $('#dock');
+  return dockWindowEntries.get(id) || $(`#dock > [data-open="${appWindow(id)?.classList.contains('notes') ? 'notes' : id}"]`) || $('#dock');
 }
 function setDockSlotPresence(slot, value) {
   const presence = Math.max(0, Math.min(1, value));
@@ -214,7 +214,9 @@ function syncDockWindows(){
       button.setAttribute('aria-controls','dock-window-menu');button.setAttribute('aria-expanded','false');
       const tooltip=document.createElement('span');tooltip.className='dock-tooltip';
       const preview=document.createElement('span');preview.className='dock-window-preview';preview.setAttribute('aria-hidden','true');
-      const badge=document.createElement('img');badge.className='dock-window-badge';badge.alt='';badge.src=pinnedDockApps.has(id)||id==='portrait'||id==='cv'||id==='ipod'?apps.find(app=>app.id===id).icon:'assets/icons/macos-10.6/finder.png';
+      const badge=document.createElement('img');badge.className='dock-window-badge';badge.alt='';
+      const badgeApp = w.classList.contains('notes') ? 'notes' : id;
+      badge.src=pinnedDockApps.has(badgeApp)||id==='portrait'||id==='cv'||id==='ipod'?apps.find(app=>app.id===badgeApp).icon:'assets/icons/macos-10.6/finder.png';
       button.append(tooltip,preview,badge);button.addEventListener('click',e=>openApp(id,e.shiftKey));
       button.addEventListener('contextmenu',e=>{e.preventDefault();showDockWindowMenu(id,button);});
       button.addEventListener('keydown',e=>{if(e.key==='Delete'){e.preventDefault();hideWindow(id,true);}if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();showDockWindowMenu(id,button);}});
@@ -268,7 +270,6 @@ function setActive(id) {
   windows.forEach(window => window.classList.toggle('inactive', window.dataset.app !== id));
   const name = {
     finder: 'Finder',
-    notes: 'Notes',
     mail: 'Mail',
     safari: 'Safari',
     portrait: 'Preview',
@@ -278,7 +279,7 @@ function setActive(id) {
     settings: 'System Preferences',
     about: 'Finder'
   };
-  $('#active-app').textContent = name[id] || 'Finder';
+  $('#active-app').textContent = appWindow(id)?.classList.contains('notes') ? 'Stickies' : name[id] || 'Finder';
   $$('.safari-menu-button').forEach(button => button.hidden = id !== 'safari');
 }
 function focusWindow(id, keyboard = false) {
@@ -290,7 +291,11 @@ function focusWindow(id, keyboard = false) {
 }
 function refreshIndicators() {
   $$('#dock > [data-open]').forEach(button => {
-    button.classList.toggle('running', appWindow(button.dataset.open).dataset.running === 'true');
+    const id = button.dataset.open;
+    const running = id === 'notes'
+      ? windows.some(window => window.classList.contains('notes') && window.dataset.running === 'true')
+      : appWindow(id)?.dataset.running === 'true';
+    button.classList.toggle('running', running);
   });
   syncDockWindows();
 }
@@ -327,6 +332,10 @@ async function ipodPlayerUrl(){
 }
 let ipodPlayerSource;
 function openApp(id, slow = false) {
+  if (id === 'notes') {
+    openStickies(slow);
+    return;
+  }
   const window = appWindow(id);
   if (!window) return;
   const wasMinimized = window.dataset.minimized === 'true';
@@ -432,6 +441,15 @@ function hideWindow(id,close=false,slow=false){
   desktopHidden=desktopHidden.filter(a=>a!==id);refreshIndicators();const front=windows.filter(x=>x!==w&&!x.hidden&&x.dataset.minimized!=='true').sort((a,b)=>Number(b.style.zIndex)-Number(a.style.zIndex))[0];setActive(front?.dataset.app||null);
   if(front)front.focus({preventScroll:true});else{const target=dockTarget(id);(target.matches('button')?target:$('#dock > [data-open="finder"]')).focus({preventScroll:true});}
 }
+function removeStickyWindow(window) {
+  const id = window.dataset.app;
+  windowAnimations.get(id)?.cancel();
+  windowAnimations.delete(id);
+  desktopHidden = desktopHidden.filter(app => app !== id);
+  windows.splice(windows.indexOf(window), 1);
+  window.remove();
+  if (activeApp === id) setActive(frontWindow()?.dataset.app || null);
+}
 function maximize(id){
   const w=appWindow(id);
   const maximized=w.classList.toggle('maximized');
@@ -460,10 +478,16 @@ function toggleMenu(menu,button){
 }
 function arrangeWindows(){windows.forEach((w,i)=>{w.classList.remove('maximized');w.style.removeProperty('width');w.style.removeProperty('height');w.style.left=`${Math.max(8,Math.min(innerWidth-w.offsetWidth-15,innerWidth/2-300+i*24))}px`;w.style.top=`${Math.max(35,Math.min(65+i*22,innerHeight-w.offsetHeight-100))}px`;});}
 function showDesktop(){for(const animation of [...windowAnimations.values()])animation.finish();const visible=windows.filter(w=>!w.hidden);if(visible.length){desktopHidden=visible.map(w=>w.dataset.app);visible.forEach(w=>w.hidden=true);setActive(null);}else{const saved=[...desktopHidden];desktopHidden=[];saved.forEach(openApp);}closeMenus();}
-windows.forEach(w=>{
+function setupWindow(w) {
   const id=w.dataset.app;
+  const sticky=w.classList.contains('notes');
   const controls=[['Close','×',()=>hideWindow(id,true)],['Minimize','−',e=>hideWindow(id,false,e.shiftKey)],['Maximize','+',()=>maximize(id)]];
-  controls.forEach(([label,symbol,action])=>{const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',`${label} ${id}`);button.title=label;button.textContent=symbol;button.addEventListener('click',action);$('.traffic-lights',w).append(button);});
+  if (sticky) {
+    $('.sticky-close',w).addEventListener('click',()=>hideWindow(id,true));
+    $('.sticky-corner',w).addEventListener('click',()=>moveStickyToCorner(w));
+  } else {
+    controls.forEach(([label,symbol,action])=>{const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',`${label} ${id}`);button.title=label;button.textContent=symbol;button.addEventListener('click',action);$('.traffic-lights',w).append(button);});
+  }
   w.addEventListener('pointerdown',()=>focusWindow(id));
   const resizeHandle=document.createElement('div');
   resizeHandle.className='window-resize-handle';
@@ -479,7 +503,7 @@ windows.forEach(w=>{
       frame=0;
       w.style.width=`${nextWidth}px`;
       w.style.height=`${nextHeight}px`;
-      if(id==='notes'&&w.classList.contains('sticky-in-corner'))moveStickyToCorner();
+      if(sticky&&w.classList.contains('sticky-in-corner'))moveStickyToCorner(w);
     };
     const resize=event=>{
       if(event.pointerId!==pointerId)return;
@@ -503,7 +527,7 @@ windows.forEach(w=>{
     resizeHandle.addEventListener('lostpointercapture',stop);
   });
   const bar=$('.titlebar',w);
-  bar.addEventListener('dblclick',e=>{if(!e.target.closest('button')){if(id==='notes')moveStickyToCorner();else hideWindow(id,false,e.shiftKey);}});
+  bar.addEventListener('dblclick',e=>{if(!e.target.closest('button')){if(sticky)moveStickyToCorner(w);else hideWindow(id,false,e.shiftKey);}});
   bar.addEventListener('pointerdown',e=>{
     if(e.button!==0||!e.isPrimary||e.target.closest('button')||w.classList.contains('maximized')||innerWidth<=640)return;
     w.classList.remove('sticky-in-corner');
@@ -541,7 +565,8 @@ windows.forEach(w=>{
     bar.addEventListener('pointercancel',stop);
     bar.addEventListener('lostpointercapture',stop);
   });
-});
+}
+windows.forEach(setupWindow);
 $$('[data-open]:not(.desktop-file)').forEach(b=>b.addEventListener('click',e=>openApp(b.dataset.open,e.shiftKey)));
 $('#active-app').addEventListener('click',()=>openApp(activeApp||'finder'));
 $('#system-menu-button').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#system-menu'),e.currentTarget);});
@@ -642,21 +667,17 @@ quickLook.addEventListener('close',()=>{
   if(s==='#spotlight')closeSpotlight();
   else e.currentTarget.close();
 }));
-function moveStickyToCorner(){
-  const note=appWindow('notes');
+function moveStickyToCorner(note, focus = true){
   note.classList.add('sticky-in-corner');
   const dockTop=$('#dock').getBoundingClientRect().top;
   note.style.left='0px';
   note.style.top=`${Math.max(30,dockTop-note.getBoundingClientRect().height-8)}px`;
-  focusWindow('notes');
+  if(focus)focusWindow(note.dataset.app);
   globalThis.GenieEffect?.schedule(note);
 }
 window.addEventListener('resize',()=>{
-  if(appWindow('notes').classList.contains('sticky-in-corner'))moveStickyToCorner();
+  windows.filter(w=>!w.hidden&&w.classList.contains('sticky-in-corner')).forEach(w=>moveStickyToCorner(w,false));
 });
-$('.sticky-close').addEventListener('click',()=>hideWindow('notes',true));
-$('.sticky-corner').addEventListener('click',moveStickyToCorner);
-$('#sticky-hire-link').href=`mailto:${portfolio.email}`;
 $('#contact-form').addEventListener('submit',e=>{
   e.preventDefault();
   const data=new FormData(e.currentTarget);
@@ -900,7 +921,7 @@ $('#lock').addEventListener('click',async()=>{
 });
 document.addEventListener('keydown',e=>{
   const loggedIn=document.body.classList.contains('logged-in');
-  if(!loggedIn)return;
+  if(!loggedIn || $('#stickies-editor').open)return;
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if($('#spotlight').open)closeSpotlight();else openSpotlight();return;}
   if($('#spotlight').open)return;
   if($('#quicklook').open){if(e.key==='ArrowLeft'){e.preventDefault();stepPreview(-1);}if(e.key==='ArrowRight'){e.preventDefault();stepPreview(1);}return;}
@@ -918,7 +939,7 @@ function updateTime(){const now=new Date();$('#datetime').dateTime=now.toISOStri
 const desktopFiles=$$('.desktop-file');
 function arrangeDesktopFiles(){
   const rows=Math.max(1,Math.floor((innerHeight-152)/90));
-  desktopFiles.forEach((file,index)=>{
+  desktopFiles.filter(file=>!file.hidden).forEach((file,index)=>{
     file.style.setProperty('--file-row',index%rows);
     file.style.setProperty('--file-column',Math.floor(index/rows));
   });

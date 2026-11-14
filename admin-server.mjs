@@ -9,6 +9,8 @@ const dockIds = ['finder', 'mail', 'safari', 'notes', 'settings'];
 const wallpapers = ['galaxy', 'horizon', 'earth-horizon', 'leopard-aurora', 'snow-leopard-prowl'];
 const maxPdfBytes = 3 * 1024 * 1024;
 const maxPdfEncoded = Math.ceil(maxPdfBytes / 3) * 4;
+const maxStickiesBytes = 280000;
+const stickyColours = ['yellow', 'blue', 'purple', 'green', 'pink', 'orange'];
 const sessionSeconds = 30 * 60;
 const attemptsSeconds = 5 * 60;
 
@@ -22,10 +24,11 @@ export function validLayout(layout) {
     !layout ||
     typeof layout !== 'object' ||
     Array.isArray(layout) ||
-    Object.keys(layout).some(key => !['desktop', 'dock', 'wallpaper', 'hasCv', 'cv'].includes(key))
+    Object.keys(layout).some(key => !['desktop', 'dock', 'wallpaper', 'hasCv', 'cv', 'stickies'].includes(key))
   ) return false;
   const { desktop, dock, hasCv = false, wallpaper = 'galaxy' } = layout;
   if (typeof hasCv !== 'boolean' || !wallpapers.includes(wallpaper)) return false;
+  if (layout.stickies !== undefined && !validStickies(layout.stickies)) return false;
   if (
     !desktop ||
     Array.isArray(desktop) ||
@@ -45,6 +48,32 @@ export function validLayout(layout) {
       point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)
     );
   });
+}
+
+function validStickies(settings) {
+  if (!settings || typeof settings.shortcut !== 'boolean' ||
+      !Array.isArray(settings.notes) || settings.notes.length > 12 ||
+      Buffer.byteLength(JSON.stringify(settings)) > maxStickiesBytes) return false;
+  const ids = new Set();
+  const text = (value, max) => typeof value === 'string' && value.length <= max;
+  for (const note of settings.notes) {
+    if (!note || !text(note.id, 48) || !/^[a-z0-9-]+$/.test(note.id) || ids.has(note.id) ||
+        !text(note.title, 64) || !text(note.text, 2000) || !text(note.linkLabel, 64) ||
+        !text(note.link, 256) || (note.link && !/^(https?:\/\/|mailto:)[^\s]+$/i.test(note.link)) ||
+        !stickyColours.includes(note.colour) || typeof note.visible !== 'boolean' ||
+        !Array.isArray(note.images) || note.images.length > 4 ||
+        !note.images.every(image => image === 'monke' || validStickyImage(image))) return false;
+    ids.add(note.id);
+  }
+  return true;
+}
+
+function validStickyImage(image) {
+  if (typeof image !== 'string' || !/^data:image\/webp;base64,[A-Za-z0-9+/]+={0,2}$/.test(image)) return false;
+  const encoded = image.slice('data:image/webp;base64,'.length);
+  const bytes = Buffer.from(encoded, 'base64');
+  return bytes.length <= 48 * 1024 && bytes.toString('base64') === encoded &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
 }
 
 function validPdf(encoded) {
@@ -131,7 +160,7 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
       if (request.method === 'PUT' && !session) return error('Unlock the desktop first.', 401);
       let body;
       try {
-        body = await readJson(request, request.method === 'PUT' ? maxPdfEncoded + 4096 : 4096);
+        body = await readJson(request, request.method === 'PUT' ? maxPdfEncoded + maxStickiesBytes + 4096 : 4096);
       } catch {
         return error('Invalid request.', 400);
       }
@@ -164,7 +193,7 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
         desktop: layout.desktop,
         dock: layout.dock,
         wallpaper: layout.wallpaper ?? 'galaxy'
-      }, cvPdf);
+      }, cvPdf, layout.stickies);
       if (!saved) return error('Session expired. Unlock the desktop again.', 401);
       return json({ layout: saved });
     } catch {
@@ -180,6 +209,7 @@ export function redisStore(url, token) {
   const session = prefix + 'session';
   const layout = prefix + 'layout';
   const cv = prefix + 'cv-pdf';
+  const stickies = prefix + 'stickies';
   const attempts = prefix + 'attempts';
   const run = async (...command) => {
     const response = await fetch(endpoint, {
@@ -197,10 +227,15 @@ export function redisStore(url, token) {
     if (body.error) throw new Error('Storage command failed');
     return body.result;
   };
+  function readLayout([desktopJson, stickiesJson]) {
+    const data = JSON.parse(desktopJson);
+    if (!validLayout(data)) return null;
+    const notes = JSON.parse(stickiesJson || 'null');
+    return validStickies(notes) ? { ...data, stickies: notes } : data;
+  }
   return {
     async getLayout() {
-      const data = JSON.parse(await run('GET', layout));
-      return validLayout(data) ? data : null;
+      return readLayout(await run('MGET', layout, stickies));
     },
     getCv: () => run('GET', cv),
     countAttempt: seconds => run(
@@ -226,23 +261,29 @@ export function redisStore(url, token) {
       session,
       value
     ),
-    saveLayout: async (value, data, pdf) => JSON.parse(await run(
-      'EVAL',
-      `if redis.call('GET',KEYS[1])~=ARGV[1] then return nil end
-       if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3]) end
-       local settings=cjson.decode(ARGV[2])
-       settings.hasCv=redis.call('EXISTS',KEYS[3])==1
-       local saved=cjson.encode(settings)
-       redis.call('SET',KEYS[2],saved)
-       return saved`,
-      3,
-      session,
-      layout,
-      cv,
-      value,
-      JSON.stringify(data),
-      pdf ?? ''
-    ))
+    saveLayout: async (value, data, pdf, notes) => {
+      const saved = await run(
+        'EVAL',
+        `if redis.call('GET',KEYS[1])~=ARGV[1] then return nil end
+         if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3]) end
+         if ARGV[4]~='' then redis.call('SET',KEYS[4],ARGV[4]) end
+         local settings=cjson.decode(ARGV[2])
+         settings.hasCv=redis.call('EXISTS',KEYS[3])==1
+         local saved=cjson.encode(settings)
+         redis.call('SET',KEYS[2],saved)
+         return {saved,redis.call('GET',KEYS[4])}`,
+        4,
+        session,
+        layout,
+        cv,
+        stickies,
+        value,
+        JSON.stringify(data),
+        pdf ?? '',
+        notes === undefined ? '' : JSON.stringify(notes)
+      );
+      return saved && readLayout(saved);
+    }
   };
 }
 
@@ -272,10 +313,11 @@ export function previewStore() {
     logout(value) {
       if (session === value) session = undefined;
     },
-    saveLayout(value, data, pdf) {
+    saveLayout(value, data, pdf, notes) {
       if (session !== value || Date.now() >= expires) return false;
       cv = pdf ?? cv;
-      layout = { ...data, hasCv: cv !== null };
+      notes ??= layout?.stickies;
+      layout = { ...data, hasCv: cv !== null, ...(notes && { stickies: notes }) };
       return layout;
     }
   };

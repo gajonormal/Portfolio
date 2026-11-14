@@ -32,7 +32,8 @@
     desktop: Object.fromEntries([...files.keys()].map(id => [id, null])),
     dock: [...apps.keys()],
     hasCv: false,
-    wallpaper: 'galaxy'
+    wallpaper: 'galaxy',
+    stickies: defaultStickies
   };
   let published = defaults;
   let layout = structuredClone(defaults);
@@ -92,7 +93,8 @@
       desktop: { ...defaults.desktop, ...next.desktop },
       dock: next.dock.filter(id => apps.has(id)),
       hasCv: next.hasCv ?? defaults.hasCv,
-      wallpaper: next.wallpaper ?? defaults.wallpaper
+      wallpaper: next.wallpaper ?? defaults.wallpaper,
+      stickies: structuredClone(next.stickies ?? defaultStickies)
     };
   }
 
@@ -103,12 +105,23 @@
     renderCv();
     wallpaperSelect.value = desktopWallpaper = layout.wallpaper;
     applyWallpaper();
+    renderStickies(layout.stickies);
   }
 
   const dirty = () => Boolean(pendingCv) || JSON.stringify(layout) !== JSON.stringify(published);
   const markDraft = () => {
     status.textContent = dirty() ? 'Unsaved changes' : '';
   };
+  const stickiesEditor = setupStickiesEditor({
+    getSettings: () => layout.stickies,
+    change() {
+      renderStickies(layout.stickies);
+      markDraft();
+    }
+  });
+  $('#admin-edit-stickies').addEventListener('click', () => {
+    if (editing && !busy) stickiesEditor();
+  });
 
   function renderCv() {
     const source = pendingCv?.url || (layout.hasCv ? cvEndpoint.href : '');

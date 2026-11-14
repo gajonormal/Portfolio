@@ -19,6 +19,7 @@ const rootFiles = [
 	'project-details.js',
 	'safari.js',
 	'genie.js',
+	'stickies.js',
 	'desktop-admin.js'
 ];
 await copyFiles(rootFiles, 'dist');
