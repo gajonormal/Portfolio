@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const derive = promisify(scrypt);
@@ -13,7 +13,10 @@ const maxPdfEncoded = Math.ceil(maxPdfBytes / 3) * 4;
 const maxStickiesBytes = 280000;
 const stickyColours = ['yellow', 'blue', 'purple', 'green', 'pink', 'orange'];
 const sessionSeconds = 30 * 60;
-const attemptsSeconds = 5 * 60;
+const loginLimits = {
+  client: { count: 8, seconds: 5 * 60 },
+  total: { count: 32, seconds: 60 }
+};
 
 export async function hashPassword(password, salt = randomBytes(16)) {
   const hash = await derive(password, salt, 32, passwordOptions);
@@ -135,7 +138,7 @@ export function isAdminEnabled({ store, origin, passwordHash }) {
   return Boolean(store && origin && /^[a-f0-9]{32}:[a-f0-9]{64}$/.test(passwordHash));
 }
 
-export function createAdminHandler({ store, origin, passwordHash, local = false }) {
+export function createAdminHandler({ store, origin, passwordHash, local = false, getClientAddress = () => null }) {
   const enabled = isAdminEnabled({ store, origin, passwordHash });
   const cookieName = local ? 'maia_admin_local' : '__Host-maia_admin';
   const cookie = (value, age) =>
@@ -190,8 +193,11 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
         if (typeof body?.password !== 'string' || !body.password || body.password.length > 256) {
           return error('Enter a valid password.', 400);
         }
-        if (await store.countAttempt(attemptsSeconds) > 8) {
-          return error('Too many attempts. Try again in five minutes.', 429, { 'Retry-After': String(attemptsSeconds) });
+        const address = getClientAddress(request);
+        const client = address ? createHmac('sha256', passwordHash).update(address).digest('hex') : 'unknown';
+        const retryAfter = await store.reserveLoginAttempt(client);
+        if (retryAfter > 0) {
+          return error('Too many attempts. Try again later.', 429, { 'Retry-After': String(retryAfter) });
         }
         const [salt, expected] = passwordHash.split(':');
         const [, actual] = (await hashPassword(body.password, Buffer.from(salt, 'hex'))).split(':');
@@ -232,7 +238,7 @@ export function redisStore(url, token) {
   const layout = prefix + 'layout';
   const cv = prefix + 'cv-pdf';
   const stickies = prefix + 'stickies';
-  const attempts = prefix + 'attempts';
+  const attempts = prefix + 'login-attempts';
   const run = async (...command) => {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -260,22 +266,30 @@ export function redisStore(url, token) {
       return readLayout(await run('MGET', layout, stickies));
     },
     getCv: () => run('GET', cv),
-    countAttempt: seconds => run(
+    reserveLoginAttempt: client => run(
       'EVAL',
-      "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n",
-      1,
-      attempts,
-      seconds
-    ),
-    startSession: (value, seconds) => run(
-      'EVAL',
-      "redis.call('SET',KEYS[1],ARGV[1],'EX',ARGV[2]); redis.call('DEL',KEYS[2]); return 1",
+      `local retryAfter = 0
+       for i = 1, #KEYS do
+         if tonumber(redis.call('GET', KEYS[i]) or '0') >= tonumber(ARGV[i]) then
+           retryAfter = math.max(retryAfter, 1, redis.call('TTL', KEYS[i]))
+         end
+       end
+       if retryAfter > 0 then return retryAfter end
+       for i = 1, #KEYS do
+         if redis.call('INCR', KEYS[i]) == 1 then
+           redis.call('EXPIRE', KEYS[i], ARGV[i + #KEYS])
+         end
+       end
+       return 0`,
       2,
-      session,
-      attempts,
-      value,
-      seconds
+      attempts + ':client:' + client,
+      attempts + ':total',
+      loginLimits.client.count,
+      loginLimits.total.count,
+      loginLimits.client.seconds,
+      loginLimits.total.seconds
     ),
+    startSession: (value, seconds) => run('SET', session, value, 'EX', seconds),
     logout: value => run(
       'EVAL',
       "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) end; return 0",
@@ -319,22 +333,35 @@ export function previewStore() {
   let cv = null;
   let session;
   let expires = 0;
-  let attempts = 0;
-  let attemptsExpire = 0;
+  const loginAttempts = new Map();
   return {
     getLayout: () => layout,
     getCv: () => cv,
-    countAttempt(seconds) {
-      if (Date.now() >= attemptsExpire) {
-        attempts = 0;
-        attemptsExpire = Date.now() + seconds * 1000;
+    reserveLoginAttempt(client) {
+      const now = Date.now();
+      const buckets = [
+        [`client:${client}`, loginLimits.client],
+        ['total', loginLimits.total]
+      ];
+      let retryAfter = 0;
+      for (const [key, limit] of buckets) {
+        const bucket = loginAttempts.get(key);
+        if (bucket?.expires <= now) loginAttempts.delete(key);
+        else if (bucket?.count >= limit.count) {
+          retryAfter = Math.max(retryAfter, Math.ceil((bucket.expires - now) / 1000));
+        }
       }
-      return ++attempts;
+      if (retryAfter > 0) return retryAfter;
+      for (const [key, limit] of buckets) {
+        const bucket = loginAttempts.get(key) ?? { count: 0, expires: now + limit.seconds * 1000 };
+        bucket.count++;
+        loginAttempts.set(key, bucket);
+      }
+      return 0;
     },
     startSession(value, seconds) {
       session = value;
       expires = Date.now() + seconds * 1000;
-      attempts = 0;
     },
     logout(value) {
       if (session === value) session = undefined;

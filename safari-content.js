@@ -93,7 +93,7 @@ const portfolio = {
       summary: 'A web experience for creating, observing, and customizing 3D aquariums. Text, an image, or a random choice provides the starting point for generating creatures and environments.',
       stack: ['JavaScript', 'Three.js', 'WebGL', 'GitHub Pages'],
       repo: 'https://github.com/gajonormal/ABISSO',
-      demo: 'https://gajonormal.github.io/ABISSO/',
+      demo: 'https://abisso.bmaia.me/',
       credit: 'Personal project hosted on GitHub Pages.',
       flow: ['Text or image', 'Seed-based generation', 'Three.js 3D scene'],
       features: [

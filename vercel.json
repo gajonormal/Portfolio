@@ -3,9 +3,21 @@
   "outputDirectory": "dist",
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!abisso-widget[.]html$).*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self'; frame-src 'self' blob: https://web.archive.org https://ipod-classic-revamped.vercel.app https://www.youtube.com; base-uri 'self'; form-action 'self'" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self'; frame-src 'self' blob: https://web.archive.org https://ipod-classic-revamped.vercel.app https://www.youtube.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        }
+      ]
+    },
+    {
+      "source": "/abisso-widget.html",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'none'; script-src data: 'sha256-phCvaMC7ggZBZuhtKETpwOGglfAwHqTWHYMy5lv1Dfs=' 'sha256-ps4BUBcp2aKB0sMvZCOriF8yL3HcLFmjMGKvDdnh2+w='; style-src 'unsafe-inline'; img-src data: blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+        }
       ]
     }
   ]
