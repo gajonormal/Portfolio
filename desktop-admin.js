@@ -33,7 +33,8 @@
     dock: [...apps.keys()],
     hasCv: false,
     wallpaper: 'galaxy',
-    stickies: defaultStickies
+    stickies: defaultStickies,
+    windows: defaultWindowSettings
   };
   let published = defaults;
   let layout = structuredClone(defaults);
@@ -94,7 +95,8 @@
       dock: next.dock.filter(id => apps.has(id)),
       hasCv: next.hasCv ?? defaults.hasCv,
       wallpaper: next.wallpaper ?? defaults.wallpaper,
-      stickies: structuredClone(next.stickies ?? defaultStickies)
+      stickies: structuredClone(next.stickies ?? defaultStickies),
+      windows: normalizeWindows(next.windows ?? defaultWindowSettings)
     };
   }
 
@@ -106,6 +108,7 @@
     wallpaperSelect.value = desktopWallpaper = layout.wallpaper;
     applyWallpaper();
     renderStickies(layout.stickies);
+    windowSettings = layout.windows;
   }
 
   const dirty = () => Boolean(pendingCv) || JSON.stringify(layout) !== JSON.stringify(published);
@@ -121,6 +124,154 @@
   });
   $('#admin-edit-stickies').addEventListener('click', () => {
     if (editing && !busy) stickiesEditor();
+  });
+
+  const windowDialog = $('#window-settings');
+  const windowSelect = $('#window-settings-app');
+  const startup = $('#window-settings-startup');
+  const startupOrder = $('#startup-order-list');
+  const originalSize = $('#window-settings-default');
+  const sizeFields = $('#window-size-fields');
+  const sizeForm = $('#window-size-form');
+  const widthField = $('#window-settings-width');
+  const heightField = $('#window-settings-height');
+  const captureSize = $('#window-settings-capture');
+  const previewSize = $('#window-settings-preview');
+  const windowLabels = {
+    safari: 'Safari', finder: 'Finder', mail: 'Mail', notes: 'Stickies',
+    cv: 'CV', portrait: 'Preview', ipod: 'iPod Classic', settings: 'System Preferences',
+    bin: 'Trash', about: 'About This Portfolio'
+  };
+  const windowIds = Object.keys(windowLabels);
+  for (const [id, label] of Object.entries(windowLabels)) windowSelect.add(new Option(label, id));
+
+  function normalizeWindows(settings) {
+    return Object.fromEntries(windowIds.flatMap(id => {
+      const item = settings[id];
+      if (!item?.startup && !item?.size) return [];
+      return [[id, {
+        startup: item.startup,
+        ...(item.size && { size: [...item.size] }),
+        ...(item.startup && item.order !== undefined && { order: item.order })
+      }]];
+    }));
+  }
+
+  const selectedWindows = () => windows.filter(window => windowSettingsId(window) === windowSelect.value);
+  const currentWindow = () => selectedWindows().sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))
+    .find(window => !window.hidden && !window.classList.contains('maximized'));
+
+  function renderStartupOrder(focusId, direction) {
+    const ids = startupWindowIds(layout.windows);
+    let nextFocus;
+    startupOrder.replaceChildren();
+    startupOrder.hidden = !ids.length;
+    $('#startup-order-empty').hidden = Boolean(ids.length);
+    ids.forEach((id, index) => {
+      const row = document.createElement('li');
+      const label = document.createElement('span');
+      label.textContent = windowLabels[id];
+      row.append(label);
+      for (const [step, text] of [[-1, 'Move back'], [1, 'Move forward']]) {
+        const target = index + step;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = text;
+        button.setAttribute('aria-label', `${text} ${windowLabels[id]}`);
+        button.disabled = target < 0 || target >= ids.length;
+        button.addEventListener('click', () => {
+          [ids[index], ids[target]] = [ids[target], ids[index]];
+          ids.forEach((app, order) => { layout.windows[app].order = order; });
+          markDraft();
+          renderStartupOrder(id, step);
+        });
+        if (id === focusId && !button.disabled && (!nextFocus || step === direction)) nextFocus = button;
+        row.append(button);
+      }
+      startupOrder.append(row);
+    });
+    if (focusId) (nextFocus ?? startup).focus();
+  }
+
+  function setWindowSetting(id, settings) {
+    if (settings.startup || settings.size) layout.windows[id] = settings;
+    else delete layout.windows[id];
+    layout.windows = normalizeWindows(layout.windows);
+    windowSettings = layout.windows;
+    markDraft();
+  }
+
+  function updateWindowSetting() {
+    if (!sizeForm.checkValidity()) return false;
+    const id = windowSelect.value;
+    setWindowSetting(id, {
+      order: layout.windows[id]?.order,
+      startup: startup.checked,
+      ...(!originalSize.checked && { size: [widthField.valueAsNumber, heightField.valueAsNumber] })
+    });
+    return true;
+  }
+
+  function useWindowSize(window) {
+    const { width, height } = window.getBoundingClientRect();
+    widthField.value = Math.round(Math.max(220, Math.min(width, 2560)));
+    heightField.value = Math.round(Math.max(150, Math.min(height, 1600)));
+  }
+
+  function refreshWindowSettings() {
+    const settings = layout.windows[windowSelect.value];
+    startup.checked = settings?.startup ?? false;
+    originalSize.checked = !settings?.size;
+    sizeFields.hidden = widthField.disabled = heightField.disabled = originalSize.checked;
+    widthField.value = settings?.size?.[0] ?? '';
+    heightField.value = settings?.size?.[1] ?? '';
+    captureSize.disabled = !currentWindow();
+    previewSize.disabled = !selectedWindows().length;
+  }
+
+  $('#admin-edit-windows').addEventListener('click', () => {
+    if (!editing || busy) return;
+    refreshWindowSettings();
+    renderStartupOrder();
+    windowDialog.showModal();
+  });
+  windowSelect.addEventListener('change', refreshWindowSettings);
+  startup.addEventListener('change', () => {
+    const id = windowSelect.value;
+    setWindowSetting(id, { ...layout.windows[id], startup: startup.checked });
+    renderStartupOrder();
+  });
+  originalSize.addEventListener('change', () => {
+    sizeFields.hidden = widthField.disabled = heightField.disabled = originalSize.checked;
+    if (!originalSize.checked && !widthField.value) {
+      const window = currentWindow();
+      if (window) useWindowSize(window);
+      else widthField.focus();
+    }
+    updateWindowSetting();
+  });
+  for (const field of [widthField, heightField]) field.addEventListener('change', updateWindowSetting);
+  captureSize.addEventListener('click', () => {
+    const window = currentWindow();
+    if (!window) return;
+    originalSize.checked = sizeFields.hidden = widthField.disabled = heightField.disabled = false;
+    useWindowSize(window);
+    updateWindowSetting();
+  });
+  $('#window-settings-done').addEventListener('click', () => {
+    if (sizeForm.reportValidity() && updateWindowSetting()) windowDialog.close();
+  });
+  sizeForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!updateWindowSetting()) return;
+    windowDialog.close();
+    const id = windowSelect.value;
+    for (const window of selectedWindows()) {
+      window.classList.remove('maximized');
+      applyOpeningSize(window);
+    }
+    openApp(id);
+    selectedWindows().forEach(fitOpeningWindow);
   });
 
   function renderCv() {
@@ -446,7 +597,7 @@
     button.focus();
   });
 
-  request().then(result => {
+  desktopLayoutReady = request().then(result => {
     if (!result.enabled) return;
     if (!editing && !signingIn && result.layout) {
       published = completeLayout(result.layout);

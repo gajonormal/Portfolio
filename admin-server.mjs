@@ -6,6 +6,7 @@ const passwordOptions = { N: 32768, r: 8, p: 3, maxmem: 64 * 1024 * 1024 };
 const desktopIds = ['finder', 'portrait', 'cv', 'notes', 'github'];
 const extraDesktopIds = ['linkedin', 'visitar', 'nethergate', 'abisso', 'oportunia', 'ipod'];
 const dockIds = ['finder', 'mail', 'safari', 'notes', 'settings'];
+const windowIds = [...dockIds, 'portrait', 'cv', 'ipod', 'bin', 'about'];
 const wallpapers = ['galaxy', 'horizon', 'earth-horizon', 'leopard-aurora', 'snow-leopard-prowl'];
 const maxPdfBytes = 3 * 1024 * 1024;
 const maxPdfEncoded = Math.ceil(maxPdfBytes / 3) * 4;
@@ -24,11 +25,12 @@ export function validLayout(layout) {
     !layout ||
     typeof layout !== 'object' ||
     Array.isArray(layout) ||
-    Object.keys(layout).some(key => !['desktop', 'dock', 'wallpaper', 'hasCv', 'cv', 'stickies'].includes(key))
+    Object.keys(layout).some(key => !['desktop', 'dock', 'wallpaper', 'hasCv', 'cv', 'stickies', 'windows'].includes(key))
   ) return false;
   const { desktop, dock, hasCv = false, wallpaper = 'galaxy' } = layout;
   if (typeof hasCv !== 'boolean' || !wallpapers.includes(wallpaper)) return false;
   if (layout.stickies !== undefined && !validStickies(layout.stickies)) return false;
+  if (layout.windows !== undefined && !validWindows(layout.windows)) return false;
   if (
     !desktop ||
     Array.isArray(desktop) ||
@@ -48,6 +50,22 @@ export function validLayout(layout) {
       point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)
     );
   });
+}
+
+function validWindows(settings) {
+  return settings !== null && typeof settings === 'object' && !Array.isArray(settings) &&
+    Object.entries(settings).every(([id, item]) => {
+      if (!windowIds.includes(id) || !item || typeof item.startup !== 'boolean' ||
+          Object.keys(item).some(key => !['startup', 'size', 'order'].includes(key))) return false;
+      if (item.order !== undefined && (!item.startup || !Number.isInteger(item.order) ||
+          item.order < 0 || item.order >= windowIds.length)) return false;
+      const { size } = item;
+      return size === undefined || (
+        Array.isArray(size) && size.length === 2 &&
+        Number.isInteger(size[0]) && size[0] >= 220 && size[0] <= 2560 &&
+        Number.isInteger(size[1]) && size[1] >= 150 && size[1] <= 1600
+      );
+    });
 }
 
 function validStickies(settings) {
@@ -192,7 +210,8 @@ export function createAdminHandler({ store, origin, passwordHash, local = false 
       const saved = await store.saveLayout(session, {
         desktop: layout.desktop,
         dock: layout.dock,
-        wallpaper: layout.wallpaper ?? 'galaxy'
+        wallpaper: layout.wallpaper ?? 'galaxy',
+        ...(layout.windows !== undefined && { windows: layout.windows })
       }, cvPdf, layout.stickies);
       if (!saved) return error('Session expired. Unlock the desktop again.', 401);
       return json({ layout: saved });
@@ -265,9 +284,13 @@ export function redisStore(url, token) {
       const saved = await run(
         'EVAL',
         `if redis.call('GET',KEYS[1])~=ARGV[1] then return nil end
+         local settings=cjson.decode(ARGV[2])
+         if settings.windows==nil then
+           local previous=redis.call('GET',KEYS[2])
+           if previous then settings.windows=cjson.decode(previous).windows end
+         end
          if ARGV[3]~='' then redis.call('SET',KEYS[3],ARGV[3]) end
          if ARGV[4]~='' then redis.call('SET',KEYS[4],ARGV[4]) end
-         local settings=cjson.decode(ARGV[2])
          settings.hasCv=redis.call('EXISTS',KEYS[3])==1
          local saved=cjson.encode(settings)
          redis.call('SET',KEYS[2],saved)
@@ -317,6 +340,7 @@ export function previewStore() {
       if (session !== value || Date.now() >= expires) return false;
       cv = pdf ?? cv;
       notes ??= layout?.stickies;
+      if (data.windows === undefined && layout?.windows !== undefined) data.windows = layout.windows;
       layout = { ...data, hasCv: cv !== null, ...(notes && { stickies: notes }) };
       return layout;
     }

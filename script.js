@@ -64,6 +64,35 @@ const folderHistory = ['all'];
 let folderHistoryIndex = 0;
 const windows = $$('.window');
 const appWindow = id => $(`#${id}-window`);
+const defaultWindowSettings = { safari: { startup: true } };
+let windowSettings = defaultWindowSettings;
+let desktopLayoutReady = Promise.resolve();
+const windowSettingsId = window => window.classList.contains('notes') ? 'notes' : window.dataset.app;
+
+function startupWindowIds(settings) {
+  return Object.keys(settings)
+    .filter(id => settings[id].startup)
+    .sort((a, b) => (settings[a].order ?? 10) - (settings[b].order ?? 10));
+}
+
+function applyOpeningSize(window) {
+  const size = windowSettings[windowSettingsId(window)]?.size;
+  window.style.removeProperty('width');
+  window.style.removeProperty('height');
+  for (const [index, axis] of ['width', 'height'].entries()) {
+    if (size) window.style.setProperty(`--opening-${axis}`, `${size[index]}px`);
+    else window.style.removeProperty(`--opening-${axis}`);
+  }
+  window.toggleAttribute('data-opening-size', Boolean(size));
+}
+
+function fitOpeningWindow(window) {
+  if (innerWidth <= 640 || !window.hasAttribute('data-opening-size') || window.classList.contains('maximized')) return;
+  const { left, top, width, height } = window.getBoundingClientRect();
+  if (left + width > innerWidth - 8) window.style.left = `${Math.max(8, innerWidth - width - 8)}px`;
+  const bottom = $('#dock').getBoundingClientRect().top - 8;
+  if (top + height > bottom) window.style.top = `${Math.max(35, bottom - height)}px`;
+}
 const pinnedDockApps = new Set($$('#dock > [data-open]').map(button => button.dataset.open));
 const dockWindowEntries = new Map();
 const dockSlotMotions = new WeakMap();
@@ -340,10 +369,15 @@ function openApp(id, slow = false) {
   if (!window) return;
   const wasMinimized = window.dataset.minimized === 'true';
   const wasRunning = window.dataset.running === 'true';
+  if (!wasRunning && (windowSettings[windowSettingsId(window)]?.size || window.hasAttribute('data-opening-size'))) {
+    window.classList.remove('maximized');
+    applyOpeningSize(window);
+  }
   window.dataset.restoring = String(wasMinimized || window.dataset.restoring === 'true');
   window.dataset.minimized = 'false';
   window.hidden = false;
   window.dataset.running = 'true';
+  if (!wasRunning) fitOpeningWindow(window);
   desktopHidden = desktopHidden.filter(app => app !== id);
   focusWindow(id, true);
   refreshIndicators();
@@ -476,7 +510,7 @@ function toggleMenu(menu,button){
   menu.style.left=`${Math.max(0,Math.min(left,innerWidth-menu.offsetWidth-8))}px`;
   if(button.closest('.menubar'))button.setAttribute('aria-expanded','true');
 }
-function arrangeWindows(){windows.forEach((w,i)=>{w.classList.remove('maximized');w.style.removeProperty('width');w.style.removeProperty('height');w.style.left=`${Math.max(8,Math.min(innerWidth-w.offsetWidth-15,innerWidth/2-300+i*24))}px`;w.style.top=`${Math.max(35,Math.min(65+i*22,innerHeight-w.offsetHeight-100))}px`;});}
+function arrangeWindows(){windows.forEach((w,i)=>{w.classList.remove('maximized');applyOpeningSize(w);w.style.left=`${Math.max(8,Math.min(innerWidth-w.offsetWidth-15,innerWidth/2-300+i*24))}px`;w.style.top=`${Math.max(35,Math.min(65+i*22,innerHeight-w.offsetHeight-100))}px`;});}
 function showDesktop(){for(const animation of [...windowAnimations.values()])animation.finish();const visible=windows.filter(w=>!w.hidden);if(visible.length){desktopHidden=visible.map(w=>w.dataset.app);visible.forEach(w=>w.hidden=true);setActive(null);}else{const saved=[...desktopHidden];desktopHidden=[];saved.forEach(openApp);}closeMenus();}
 function setupWindow(w) {
   const id=w.dataset.app;
@@ -879,7 +913,7 @@ $('#login-sleep').addEventListener('click',()=>setLoginPower('sleep'));
 $('#login-restart').addEventListener('click',()=>location.reload());
 $('#login-shutdown').addEventListener('click',()=>setLoginPower('shutdown'));
 loginPowerReturn.addEventListener('click',()=>setLoginPower(''));
-$('#login-button').addEventListener('click',()=>{
+$('#login-button').addEventListener('click',async ()=>{
   if(prefs.sound){
     // The recording has about 240 ms of silence before the chime.
     startSound.currentTime=.22;
@@ -889,7 +923,13 @@ $('#login-button').addEventListener('click',()=>{
   $('.menubar').inert=false;
   if(!hasEntered){
     hasEntered=true;
-    openApp('safari');
+    if (!document.body.classList.contains('desktop-admin')) await desktopLayoutReady;
+    if (document.body.classList.contains('logged-in')) {
+      startupWindowIds(windowSettings).forEach(id => openApp(id));
+      if (!frontWindow()) $('#dock button').focus();
+    } else {
+      hasEntered=false;
+    }
   }else if(frontWindow()){
     focusWindow(frontWindow().dataset.app,true);
   }else{
@@ -921,7 +961,7 @@ $('#lock').addEventListener('click',async()=>{
 });
 document.addEventListener('keydown',e=>{
   const loggedIn=document.body.classList.contains('logged-in');
-  if(!loggedIn || $('#stickies-editor').open)return;
+  if(!loggedIn || $('.desktop-editor-dialog[open]'))return;
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if($('#spotlight').open)closeSpotlight();else openSpotlight();return;}
   if($('#spotlight').open)return;
   if($('#quicklook').open){if(e.key==='ArrowLeft'){e.preventDefault();stepPreview(-1);}if(e.key==='ArrowRight'){e.preventDefault();stepPreview(1);}return;}

@@ -1117,6 +1117,8 @@
             <button id="admin-edit-cv" type="button">Upload CV</button>
             <span>Stickies</span>
             <button id="admin-edit-stickies" type="button">Edit notes</button>
+            <span>Windows</span>
+            <button id="admin-edit-windows" type="button">Startup &amp; sizes</button>
           </div>
           <div class="admin-actions">
             <button id="admin-lock" type="button">Lock desktop</button>
@@ -1294,19 +1296,47 @@
         <span id="login-power-hint"></span>
       </button>
     </section>
-    <dialog id="stickies-editor" aria-labelledby="stickies-editor-title">
+    <dialog id="window-settings" class="desktop-editor-dialog" aria-labelledby="window-settings-title">
+      <header>
+        <h2 id="window-settings-title">Startup &amp; window sizes</h2>
+        <button type="button" id="window-settings-done">Done</button>
+      </header>
+      <div class="desktop-editor-body">
+        <label>Window <select id="window-settings-app"></select></label>
+        <label class="editor-checkbox"><input type="checkbox" id="window-settings-startup"> Open when entering the desktop</label>
+        <fieldset class="startup-order">
+          <legend>Startup order (back to front)</legend>
+          <p id="startup-order-empty">No windows open at startup.</p>
+          <ol id="startup-order-list" aria-label="Windows from back to front"></ol>
+        </fieldset>
+        <form id="window-size-form">
+          <label class="editor-checkbox"><input type="checkbox" id="window-settings-default"> Use the original size</label>
+          <div id="window-size-fields" hidden>
+            <div class="editor-fields-row">
+              <label>Width (px) <input id="window-settings-width" type="number" min="220" max="2560" step="1" required></label>
+              <label>Height (px) <input id="window-settings-height" type="number" min="150" max="1600" step="1" required></label>
+            </div>
+          </div>
+          <div class="editor-fields-row">
+            <button type="button" id="window-settings-capture">Use current size</button>
+            <button type="submit" id="window-settings-preview">Preview window</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+    <dialog id="stickies-editor" class="desktop-editor-dialog" aria-labelledby="stickies-editor-title">
       <header>
         <h2 id="stickies-editor-title">Edit Stickies</h2>
         <button type="button" id="stickies-done" autofocus>Done</button>
       </header>
-      <div class="stickies-editor-body">
-        <label class="sticky-checkbox"><input type="checkbox" id="stickies-shortcut"> Show shortcut on desktop</label>
+      <div class="desktop-editor-body">
+        <label class="editor-checkbox"><input type="checkbox" id="stickies-shortcut"> Show shortcut on desktop</label>
         <div class="sticky-picker">
           <label>Note <select id="stickies-picker"></select></label>
           <button type="button" id="stickies-add">New note</button>
         </div>
         <div id="sticky-fields" hidden>
-          <div class="sticky-fields-row">
+          <div class="editor-fields-row">
             <label>Title <input id="sticky-title" maxlength="64"></label>
             <label>Colour
               <select id="sticky-colour">
@@ -1320,14 +1350,14 @@
             </label>
           </div>
           <label>Text <textarea id="sticky-text" rows="5" maxlength="2000"></textarea></label>
-          <div class="sticky-fields-row">
+          <div class="editor-fields-row">
             <label>Link label <input id="sticky-link-label" maxlength="64"></label>
             <label>Link URL <input id="sticky-link" maxlength="256" placeholder="https:// or mailto:"></label>
           </div>
           <div class="sticky-images" id="sticky-images"></div>
           <label>Add image <input type="file" id="sticky-upload" accept="image/png,image/jpeg,image/webp,image/gif,image/avif"></label>
           <div class="sticky-fields-actions">
-            <label class="sticky-checkbox"><input type="checkbox" id="sticky-visible"> Show in Stickies</label>
+            <label class="editor-checkbox"><input type="checkbox" id="sticky-visible"> Show in Stickies</label>
             <button type="button" id="stickies-delete">Delete note</button>
           </div>
         </div>
