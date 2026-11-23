@@ -855,6 +855,7 @@ kbd {
     0 1px #fff,
     inset 0 1px #fff;
   line-height: 1.4;
+  text-align: center;
   text-decoration: none;
   font-size: 11px;
   cursor: pointer;
@@ -865,9 +866,7 @@ kbd {
 .aqua-button.primary {
   background: linear-gradient(#d7ecff 0%, #7cb8ed 48%, #62a3e2 50%, #b8dcff);
   border-color: #5286ba;
-  box-shadow:
-    inset 0 1px #fff9,
-    0 1px #fff;
+  box-shadow: inset 0 1px #fff9;
   color: #173451;
 }
 .portrait {
