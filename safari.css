@@ -1752,6 +1752,24 @@
   margin-top: 0;
 }
 
+.archive-bio-story {
+  scroll-margin-top: 9px;
+}
+
+.archive-bio-story summary {
+  border-bottom: 1px solid #aaa;
+  margin-bottom: 7px;
+  padding-bottom: 3px;
+  cursor: pointer;
+}
+
+.archive-bio-story summary h2 {
+  display: inline;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
 .archive-bio-figure {
   float: right;
   width: min(32%, 180px);

@@ -48,10 +48,10 @@ const wikiStringsPortuguese = {
   "Computer Science": "Engenharia Informática",
   Education: "Formação",
   Email: "Email",
-  "Maybe it all started with a PSP": "Talvez tudo tenha começado com uma PSP",
-  "Studying Computer Science": "Estudar Engenharia Informática",
+  "How it started": "Como tudo começou",
+  "Academic projects": "Projetos académicos",
   "Personal projects": "Projetos pessoais",
-  "What’s next": "O que se segue",
+  "Career goals": "Objetivos profissionais",
   "VisitAR icon": "Ícone do VisitAR",
   "VisitAR, my final-year team project.":
     "VisitAR, o meu projeto de fim de curso em equipa.",
