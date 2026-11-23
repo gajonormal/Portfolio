@@ -932,6 +932,8 @@ spotlightDialog.addEventListener('keydown',e=>{
 let hasEntered=false,loginTimer;
 const loginScreen=$('#login-screen');
 const loginPowerReturn=$('#login-power-return');
+// Keep the login markup hidden until the deferred script runs after the stylesheets.
+loginScreen.hidden=false;
 function setLoginPower(state){
   const poweredDown=Boolean(state);
   const previousState=loginScreen.dataset.power;
