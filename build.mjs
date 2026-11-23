@@ -10,6 +10,8 @@ await mkdir('dist', { recursive: true });
 
 const rootFiles = [
 	'index.html',
+	'robots.txt',
+	'sitemap.xml',
 	'abisso-widget.html',
 	'style.css',
 	'snow-leopard.css',
